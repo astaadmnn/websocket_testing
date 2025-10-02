@@ -20,7 +20,7 @@
     const itemsDiv = document.getElementById("orderItems");
     const totalSpan = document.getElementById("orderTotal");
 
-const ws = new WebSocket("ws://192.168.1.6:3000");
+const ws = new WebSocket("wss://websocket-testing-3tpu.onrender.com");
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -45,4 +45,5 @@ const ws = new WebSocket("ws://192.168.1.6:3000");
   </script>
 </body>
 </html>
+
 
