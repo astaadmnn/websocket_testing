@@ -2,20 +2,21 @@ const express = require("express");
 const { WebSocketServer } = require("ws");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Serve static files
+// ✅ serve everything inside /public
 app.use(express.static("public"));
 
 const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
-// WebSocket
+// ✅ WebSocket
 const wss = new WebSocketServer({ server });
 
 wss.on("connection", (ws) => {
   console.log("Client connected");
+
   ws.on("message", (message) => {
     console.log("Received:", message.toString());
     wss.clients.forEach((client) => {
@@ -24,5 +25,6 @@ wss.on("connection", (ws) => {
       }
     });
   });
+
   ws.on("close", () => console.log("Client disconnected"));
 });
