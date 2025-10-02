@@ -577,6 +577,8 @@ function setupPurchaseForm() {
     if (!purchaseBtn || !rfidInput) return;
 
     purchaseBtn.addEventListener('click', async () => {
+             console.log("Clicked")
+
         if (isPurchaseProcessing || !isRFIDValid) return;
 
         const selectedProducts = Object.values(cart).map(i => ({
