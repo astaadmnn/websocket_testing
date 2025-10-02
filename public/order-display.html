@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Order Display</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white rounded-2xl shadow p-8 max-w-lg w-full">
+    <h1 class="text-2xl font-bold mb-4 text-center">Live Order Summary</h1>
+    <div id="orderItems" class="space-y-2 mb-4 text-gray-800"></div>
+    <p class="text-xl font-semibold text-center">Total: ₱<span id="orderTotal">0.00</span></p>
+  </div>
+
+  <script>
+    const itemsDiv = document.getElementById("orderItems");
+    const totalSpan = document.getElementById("orderTotal");
+
+const ws = new WebSocket("ws://192.168.1.6:3000");
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "order") {
+        itemsDiv.innerHTML = "";
+        data.items.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "flex justify-between border-b py-2";
+          row.innerHTML = `<span>${item.name} (x${item.qty})</span>
+                           <span>₱${item.subtotal.toFixed(2)}</span>`;
+          itemsDiv.appendChild(row);
+        });
+        totalSpan.textContent = data.total.toFixed(2);
+      }
+
+      if (data.type === "clear") {
+        itemsDiv.innerHTML = `<p class="text-gray-500 text-center">No active order.</p>`;
+        totalSpan.textContent = "0.00";
+      }
+    };
+  </script>
+</body>
+</html>

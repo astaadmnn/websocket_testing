@@ -1,0 +1,28 @@
+const express = require("express");
+const { WebSocketServer } = require("ws");
+
+const app = express();
+const PORT = 3000;
+
+// Serve static files
+app.use(express.static("public"));
+
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+});
+
+// WebSocket
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", (ws) => {
+  console.log("Client connected");
+  ws.on("message", (message) => {
+    console.log("Received:", message.toString());
+    wss.clients.forEach((client) => {
+      if (client.readyState === ws.OPEN) {
+        client.send(message.toString());
+      }
+    });
+  });
+  ws.on("close", () => console.log("Client disconnected"));
+});

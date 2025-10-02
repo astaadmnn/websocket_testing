@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Management | SmartBite</title>
+  
+  <!-- Icons & Styles -->
+  <script src="https://kit.fontawesome.com/6dc93004d4.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link rel="stylesheet" href="../css/buy_products.css"/>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
+  <script type="module" src="../script/firebase_conn.js"></script>
+  <script type="module" src="../data_insertion/product_crud.js" defer></script>
+
+  <style>
+    tbody tr { transition: background-color 0.2s, transform 0.2s; }
+    tbody tr:hover { background-color: #f3f4f6; transform: scale(1.01); }
+    .modal-scale { transition: all 0.2s ease-in-out; transform: scale(0.9); opacity: 0; }
+    .modal-scale.show { transform: scale(1); opacity: 1; }
+    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 flex">
+
+<aside id="sidebar" class="bg-slate-900 w-64 min-h-screen flex flex-col shadow-lg">
+  <div class="bg-slate-800 p-6 flex items-center justify-center space-x-3">
+    <i class="fas fa-wallet text-2xl text-blue-500"></i>
+    <h1 class="text-2xl font-bold text-white">SmartBite</h1>
+  </div>
+
+  <nav class="flex-1 py-4">
+    <ul class="space-y-2 px-3">
+      <li><a href="/public/index.html" class="menu-item text-gray-300" data-page="index.html"><i class="fas fa-credit-card w-6"></i> Register RFID Card</a></li>
+      <li><a href="/SMARTBITE-ADMIN/load_rfid.html" class="menu-item text-gray-300" data-page="load_rfid.html"><i class="fas fa-wallet w-6"></i> Load Card</a></li>
+      <li><a href="/SMARTBITE-ADMIN/return_money.html" class="menu-item text-gray-300" data-page="return_money.html"><i class="fas fa-money-bill-wave w-6"></i> Withdraw Money</a></li>
+      <li><a href="/public/products.html" class="menu-item text-gray-300" data-page="products.html"><i class="fas fa-box w-6"></i> Add Product</a></li>
+      <li><a href="/public/buy_products.html" class="menu-item text-gray-300" data-page="buy_products.html"><i class="fas fa-shopping-cart w-6"></i> Buy Product</a></li>
+      <li><a href="../SMARTBITE-ADMIN/sales.html" class="menu-item text-gray-300" data-page="sales.html"><i class="fas fa-shopping-cart w-6"></i>Sales</a></li>
+      <li><a href="../SMARTBITE-ADMIN/logs.html" class="menu-item text-gray-300" data-page="logs.html"><i class="fas fa-shopping-cart w-6"></i>Logs</a></li>
+      <li><a href="/SMARTBITE-ADMIN/add_cashier.html" class="menu-item text-gray-300" data-page="add_cashier.html"><i class="fas fa-user-plus w-6"></i> Add Cashier</a></li>
+      <li><a href="../SMARTBITE-ADMIN/student_list.html" class="menu-item text-gray-300"><i class="fas fa-user-plus w-6"></i> Student List</a></li>
+    </ul>
+  </nav>
+
+  <!-- Logout button at the bottom -->
+  <div class="p-6 border-t border-slate-700">
+    <button id="logoutBtn" class="w-full flex items-center justify-center px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition">
+      <i class="fas fa-sign-out-alt mr-2"></i> Logout
+    </button>
+  </div>
+</aside>
+
+
+<!-- Main -->
+<main class="flex-1 p-6">
+  <div class="container mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-gray-800 text-center lg:text-left">MPHS Cafeteria - Welcome to SmartBite</h1>
+
+    <!-- Search Bar -->
+    <div class="mb-8 max-w-3xl mx-auto flex flex-col sm:flex-row gap-3 items-stretch">
+      <div class="relative flex-1">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search products by name, category, or price..."
+          class="w-full h-full px-4 py-2 pl-10 rounded-xl border border-gray-300 
+                 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+        >
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <i class="fas fa-search"></i>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button 
+          id="clearSearchBtn" 
+          class="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 shadow 
+                 flex items-center gap-2 transition"
+        >
+          <i class="fas fa-times"></i>
+          <span class="hidden sm:inline">Clear</span>
+        </button>
+        <button 
+          id="searchBtn" 
+          class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow 
+                 flex items-center gap-2 transition"
+        >
+          <i class="fas fa-search"></i>
+          <span class="hidden sm:inline">Search</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="flex gap-3 mb-8 flex-wrap justify-center lg:justify-start">
+      <button class="category-btn px-5 py-2 rounded-full text-sm font-medium bg-blue-600 text-white shadow transition ring-2 ring-blue-400" data-category="all">All</button>
+      <button class="category-btn px-5 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-blue-100 transition" data-category="Snacks">Snacks</button>
+      <button class="category-btn px-5 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-blue-100 transition" data-category="Drinks">Drinks</button>
+      <button class="category-btn px-5 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-blue-100 transition" data-category="Meals">Meals</button>
+    </div>
+
+    <!-- Layout: Products + Invoice -->
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+      <!-- Products Grid with Pagination -->
+      <div class="lg:flex-1 w-full">
+        <div class="bg-white p-6 rounded-2xl shadow">
+          <h2 class="text-xl font-bold mb-4 text-gray-800">Available Products</h2>
+          
+          <!-- Products Grid -->
+          <div id="products_list" class="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6"></div>
+          
+          <!-- Pagination Controls -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
+            <div class="text-sm text-gray-600">
+              Showing page <span id="currentPage" class="font-semibold">1</span> of 
+              <span id="totalPages" class="font-semibold">1</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <!-- Previous Button -->
+              <button 
+                id="prevPageBtn" 
+                class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                disabled
+              >
+                <i class="fas fa-chevron-left"></i>
+                <span class="hidden sm:inline">Previous</span>
+              </button>
+              
+              <!-- Page Numbers -->
+              <div id="pageNumbers" class="flex gap-1 mx-2">
+                <!-- Page numbers will be dynamically inserted here -->
+              </div>
+              
+              <!-- Next Button -->
+              <button 
+                id="nextPageBtn" 
+                class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                disabled
+              >
+                <span class="hidden sm:inline">Next</span>
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+            
+            <!-- Products Per Page Selector -->
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">Show:</span>
+              <select 
+                id="productsPerPage" 
+                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="4">4</option>
+                <option value="8" selected>8</option>
+                <option value="12">12</option>
+                <option value="16">16</option>
+                <option value="20">20</option>
+              </select>
+              <span class="text-sm text-gray-600">per page</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Section -->
+      <aside class="w-full max-w-md bg-white p-6 rounded-2xl shadow sticky top-6 flex flex-col">
+        <h2 class="text-xl font-bold mb-4 text-gray-800">Order Summary</h2>
+        <div id="invoice_items" class="space-y-2 flex-1 overflow-y-auto pr-2 border-b pb-3"></div>
+        <div class="flex justify-between items-center pt-3 mt-3 border-t">
+          <p class="text-lg font-semibold">Total: ₱<span id="total_price">0.00</span></p>
+        </div>
+        <input id="card_number_buy" type="text" placeholder="RFID Card Number" class="w-full px-4 py-2 mt-4 border rounded-lg shadow-sm focus:ring focus:ring-blue-300 focus:border-blue-500" required pattern="\d*" title="Only numbers are allowed" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="12"/>
+        <button id="purchaseBtn" class="w-full mt-4 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">Complete Purchase</button>
+      </aside>
+
+    </div>
+  </div>
+</main>
+
+<!-- Confirm Modal -->
+<div id="confirmModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-lg w-96 max-h-[80vh] overflow-y-auto p-6 relative">
+    <button id="confirmClose" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Confirm Purchase</h3>
+    <div id="confirmMessage" class="text-gray-700 text-sm space-y-2 text-left"></div>
+    <div class="flex justify-end gap-3 mt-5">
+      <button id="confirmNo" class="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-700 shadow">Cancel</button>
+      <button id="confirmYes" class="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white shadow">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Info Modal -->
+<div id="infoModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-lg w-96 max-h-[80vh] overflow-y-auto p-6 relative">
+    <button id="infoClose" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Information</h3>
+    <div id="infoMessage" class="text-gray-700 text-sm space-y-2 text-left"></div>
+    <div class="flex justify-end mt-5">
+      <button id="infoOk" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script type="module" src="buy_product.js"></script>
+
+<script>
+  // Category highlighting
+  document.querySelectorAll('.category-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.category-btn').forEach(b => {
+        b.classList.remove("bg-blue-600", "text-white", "shadow", "ring-2", "ring-blue-400");
+        b.classList.add("bg-gray-200", "text-gray-800");
+      });
+      btn.classList.remove("bg-gray-200", "text-gray-800");
+      btn.classList.add("bg-blue-600", "text-white", "shadow", "ring-2", "ring-blue-400");
+    });
+  });
+
+  // Search Button
+  document.getElementById("searchBtn").addEventListener("click", () => {
+    const query = document.getElementById("searchInput").value.trim();
+    console.log("Searching for:", query); 
+    // existing logic will handle filtering
+  });
+
+  // Clear Search
+  document.getElementById("clearSearchBtn").addEventListener("click", () => {
+    document.getElementById("searchInput").value = "";
+    console.log("Search cleared");
+    // existing logic will handle reset
+  });
+</script>
+
+<script>
+  // Connect to the WebSocket server
+const ws = new WebSocket("ws://192.168.1.6:3000");
+
+  // Send the live cart
+function sendLiveOrder(cart) {
+  const items = Object.values(cart).map(i => ({
+    name: i.name,
+    qty: i.qty,
+    price: i.price,
+    subtotal: i.price * i.qty
+  }));
+  const total = items.reduce((sum, i) => sum + i.subtotal, 0);
+
+  const payload = { type: "order", items, total };
+  console.log("Sending order:", payload); // 👀 debug
+  ws.send(JSON.stringify(payload));
+}
+
+function clearLiveOrder() {
+  console.log("Clearing order"); // 👀 debug
+  ws.send(JSON.stringify({ type: "clear" }));
+}
+
+</script>
+
+
+
+</body>
+</html>
