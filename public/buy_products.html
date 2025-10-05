@@ -251,12 +251,21 @@ function sendLiveOrder(cart) {
     price: i.price,
     subtotal: i.price * i.qty
   }));
-  const total = items.reduce((sum, i) => sum + i.subtotal, 0);
 
+  // If cart is empty, tell the display to clear
+  if (items.length === 0) {
+    ws.send(JSON.stringify({ type: "clear" }));
+    console.log("🧹 Sent clear message");
+    return;
+  }
+
+  const total = items.reduce((sum, i) => sum + i.subtotal, 0);
   const payload = { type: "order", items, total };
-  console.log("Sending order:", payload); // 👀 debug
+
   ws.send(JSON.stringify(payload));
+  console.log("📦 Sent order:", payload);
 }
+
 
 function clearLiveOrder() {
   console.log("Clearing order"); // 👀 debug
