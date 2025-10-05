@@ -252,12 +252,18 @@ function sendLiveOrder(cart) {
     subtotal: i.price * i.qty
   }));
 
-  // If cart is empty, tell the display to clear
   if (items.length === 0) {
+    // Send clear when cart is empty
     ws.send(JSON.stringify({ type: "clear" }));
-    console.log("🧹 Sent clear message");
+    console.log("🧹 Sent clear signal (empty cart)");
     return;
   }
+
+  const total = items.reduce((sum, i) => sum + i.subtotal, 0);
+  ws.send(JSON.stringify({ type: "order", items, total }));
+  console.log("📦 Sent order:", { items, total });
+}
+
 
   const total = items.reduce((sum, i) => sum + i.subtotal, 0);
   const payload = { type: "order", items, total };
