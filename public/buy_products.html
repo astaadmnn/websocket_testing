@@ -251,26 +251,14 @@ function sendLiveOrder(cart) {
     price: i.price,
     subtotal: i.price * i.qty
   }));
-
-  if (items.length === 0) {
-    // Send clear when cart is empty
-    ws.send(JSON.stringify({ type: "clear" }));
-    console.log("🧹 Sent clear signal (empty cart)");
-    return;
-  }
-
+  
   const total = items.reduce((sum, i) => sum + i.subtotal, 0);
-  ws.send(JSON.stringify({ type: "order", items, total }));
-  console.log("📦 Sent order:", { items, total });
-}
 
-
-  const total = items.reduce((sum, i) => sum + i.subtotal, 0);
   const payload = { type: "order", items, total };
-
+  console.log("Sending order:", payload); // Debug log
   ws.send(JSON.stringify(payload));
-  console.log("📦 Sent order:", payload);
 }
+
 
 
 function clearLiveOrder() {
