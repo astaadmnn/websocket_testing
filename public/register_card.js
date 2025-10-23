@@ -1,4 +1,4 @@
-import { db } from "../script/firebase_conn.js";
+import { db } from "firebase_conn.js";
 import { ref, push, set, get } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
@@ -1611,12 +1611,12 @@ function initializeLogout() {
       .then(() => {
         console.log("Firebase signout successful");
         // Redirect to login page
-        window.location.href = "../index.html";
+        window.location.href = "index.html";
       })
       .catch((error) => {
         console.error("Firebase logout failed:", error);
         // Still redirect even if Firebase signout fails
-        window.location.href = "../index.html";
+        window.location.href = "index.html";
       });
   });
 
@@ -1644,4 +1644,5 @@ function initializeLogout() {
 // Also initialize if script loads after DOM is already loaded
 if (document.readyState === 'complete') {
   initializeLogout();
+
 }
