@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const roleAccess = {
       accountant: ["load_rfid.html", "return_money.html", "sales.html"],
       it: ["index.html", "load_rfid.html", "student_list.html"],
-      cashier: ["buy_products.html", "products.html", "order-display.html"],
+      cashier: ["buy_products.html", "products.html", "order-display.html", "add_role.html"],
       "super admin": ["*"], // full access
     };
 
@@ -49,10 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
     it: {
       allowed: ["index.html", "load_rfid.html", "student_list.html"],
       defaultPage: "index.html",
-      folder: "SMARTBITE-ADMIN/",
+      folder: "",
     },
     cashier: {
-      allowed: ["buy_products.html", "products.html", "order-display.html"],
+      allowed: ["buy_products.html", "products.html", "order-display.html", "add_role.html"],
       defaultPage: "buy_products.html",
       folder: "",
     },
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   } else {
     // Unknown role fallback
-    window.location.href = "../SMARTBITE-ADMIN/login.html";
+    window.location.href = "login.html";
   }
 
   // 🚪 Logout button functionality
@@ -86,8 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("cashierUser");
-      window.location.href = "../SMARTBITE-ADMIN/login.html";
+      window.location.href = "login.html";
     });
   }
 });
-
