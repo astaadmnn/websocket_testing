@@ -1,4 +1,4 @@
-import { db } from "../script/firebase_conn.js";
+import { db } from "firebase_conn.js";
 import { ref, push, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
 document.addEventListener("DOMContentLoaded", () => {
