@@ -1,4 +1,4 @@
-import { db } from "../script/firebase_conn.js";
+import { db } from "firebase_conn.js";
 import { ref as dbRef, get, child, push, set } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
 const loginForm = document.getElementById("loginForm");
@@ -54,11 +54,11 @@ loginForm.addEventListener("submit", async (e) => {
       const role = foundUser.role?.toLowerCase();
 
       if (role === "accountant") {
-        window.location.href = "../SMARTBITE-ADMIN/load_rfid.html";
+        window.location.href = "load_rfid.html";
       } else if (role === "it" || role === "super admin") {
-        window.location.href = "../public/index.html";
+        window.location.href = "index.html";
       } else if (role === "cashier") {
-        window.location.href = "../public/buy_products.html";
+        window.location.href = "buy_products.html";
       } else {
         showError("Unknown role. Please contact the administrator.");
       }
