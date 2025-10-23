@@ -1,4 +1,4 @@
-import { db } from "../script/firebase_conn.js";
+import { db } from "firebase_conn.js";
 import { ref, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 // Configuration
@@ -1069,4 +1069,5 @@ if (document.readyState === 'complete') {
     chartManager.initialize();
     paginationManager.initialize();
     loadSalesData();
+
 }
