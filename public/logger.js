@@ -1,4 +1,4 @@
-import { db } from "../script/firebase_conn.js";
+import { db } from "firebase_conn.js";
 import { ref as dbRef, onValue, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
 // State management
@@ -846,5 +846,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
 
 console.log('🚀 System Logs Manager loaded successfully!');
