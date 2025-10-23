@@ -1,4 +1,4 @@
-import { db } from "../script/firebase_conn.js";
+import { db } from "firebase_conn.js";
 import { ref, get, update, remove } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
 // ---------- Sorting state ----------
@@ -756,4 +756,5 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadStudents();
     setupSearch();
     setupSorting();
+
 });
