@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // If no session, redirect to login
   if (!user) {
-    window.location.href = "../SMARTBITE-ADMIN/login.html";
+    window.location.href = "login.html";
     return;
   }
 
@@ -44,22 +44,22 @@ document.addEventListener("DOMContentLoaded", () => {
     accountant: {
       allowed: ["load_rfid.html", "return_money.html", "sales.html"],
       defaultPage: "load_rfid.html",
-      folder: "../SMARTBITE-ADMIN/",
+      folder: "",
     },
     it: {
       allowed: ["index.html", "load_rfid.html", "student_list.html"],
       defaultPage: "index.html",
-      folder: "../SMARTBITE-ADMIN/",
+      folder: "SMARTBITE-ADMIN/",
     },
     cashier: {
       allowed: ["buy_products.html", "products.html", "order-display.html"],
       defaultPage: "buy_products.html",
-      folder: "../public/",
+      folder: "",
     },
     "super admin": {
       allowed: ["*"],
       defaultPage: null, // no forced redirect
-      folder: "../SMARTBITE-ADMIN/",
+      folder: "",
     },
   };
 
@@ -90,3 +90,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
