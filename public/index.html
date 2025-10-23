@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register a RFID Card | SmartBite</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../css/index.css">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+  <script src="../script/firebase_conn.js"></script>
+  <script type="module" src="../script/role_access.js"></script>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- XLSX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- EmailJS Init -->
+  <script>
+    emailjs.init({ publicKey: "qnR21gUxnxbWbz5Zs" });
+  </script>
+
+  <!-- Arduino Integration -->
+  <script src="../script/arduino_detector.js"></script>
+  <script src="../script/arduino_connection.js"></script>
+  
+  <!-- Register Card Logic -->
+  <script type="module" src="../data_insertion/register_card.js"></script>
+
+  <style>
+    .selected {
+      border-right-style: solid;
+      border-right-width: 6px;
+      border-right-color: #2563eb;
+    }
+    
+    /* Prevent spinner in number inputs */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    input[type=number] {
+      appearance: textfield;
+    }
+
+    /* RFID Scanner Active Indicator */
+    .rfid-active {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .rfid-indicator {
+      display: none;
+    }
+
+    .rfid-active .rfid-indicator {
+      display: block;
+    }
+
+    /* Ensure relative positioning for input containers */
+    .input-wrapper {
+      position: relative;
+    }
+
+    /* Enhanced Visual indicator styles */
+    [id$="_indicator"] {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #9ca3af;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.2);
+    }
+    
+    .border-red-500 {
+      border-color: #ef4444 !important;
+      border-width: 2px !important;
+    }
+    
+    .border-green-500 {
+      border-color: #22c55e !important;
+      border-width: 2px !important;
+    }
+    
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Enhanced input transitions */
+    input {
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      transform: translateY(-1px);
+    }
+
+    /* Button hover effects */
+    button {
+      transition: all 0.3s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Modal animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Processing modal spinner */
+    .processing-spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Enhanced card styling */
+    .form-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    /* Label styling */
+    label {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    /* Input field enhancements */
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Generate button specific styling */
+    #generateBtn {
+      position: relative;
+      overflow: hidden;
+    }
+
+    #generateBtn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    #generateBtn:active::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    /* Philippine Time Display */
+    .ph-time-display {
+      background: linear-gradient(135deg, #0055A4 0%, #BF0A30 50%, #FFFFFF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+
+    /* Sidebar transition */
+    #sidebar {
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-collapsed {
+      width: 70px !important;
+    }
+
+    .sidebar-collapsed .menu-text,
+    .sidebar-collapsed .logo-text {
+      display: none;
+    }
+
+    .sidebar-collapsed .menu-item {
+      justify-content: center;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .toggle-btn {
+      transform: rotate(180deg);
+    }
+
+    .main-expanded {
+      margin-left: 70px;
+    }
+
+    .menu-item {
+      transition: all 0.2s ease;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+      transform: translateX(2px);
+    }
+
+    .menu-item.active {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+
+    /* Modal animations */
+    .animate-slideUp {
+      animation: slideUp 0.3s ease-out;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 flex min-h-screen font-sans">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="bg-slate-900 w-64 min-h-screen flex flex-col shadow-lg relative">
+    <!-- Toggle Button -->
+    <div class="absolute -right-3 top-6 z-10">
+      <button id="sidebarToggle" class="bg-slate-800 text-white p-2 rounded-full shadow-md hover:bg-slate-700 transition-colors toggle-btn">
+        <i class="fas fa-chevron-left text-sm"></i>
+      </button>
+    </div>
+    
+    <!-- Logo Section -->
+    <div class="bg-slate-800 p-4 flex items-center justify-center space-x-3">
+      <i class="fas fa-wallet text-2xl text-blue-500"></i>
+      <h1 class="text-xl font-bold text-white logo-text">SmartBite</h1>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <ul class="space-y-1 px-2">
+        <li>
+          <a href="/public/index.html" class="menu-item text-gray-300 flex items-center active" data-page="index.html">
+            <i class="fas fa-credit-card w-6 text-center"></i>
+            <span class="ml-3 menu-text">Register RFID</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/load_rfid.html" class="menu-item text-gray-300 flex items-center" data-page="load_rfid.html">
+            <i class="fas fa-wallet w-6 text-center"></i>
+            <span class="ml-3 menu-text">Load Card</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/return_money.html" class="menu-item text-gray-300 flex items-center" data-page="return_money.html">
+            <i class="fas fa-money-bill-wave w-6 text-center"></i>
+            <span class="ml-3 menu-text">Withdraw Money</span>
+          </a>
+        </li>
+        <li>
+          <a href="/public/products.html" class="menu-item text-gray-300 flex items-center" data-page="products.html">
+            <i class="fas fa-box w-6 text-center"></i>
+            <span class="ml-3 menu-text">Add Product</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://websocket-testing-3tpu.onrender.com/buy_products.html" class="menu-item text-gray-300 flex items-center" data-page="buy_products.html">
+            <i class="fas fa-shopping-cart w-6 text-center"></i>
+            <span class="ml-3 menu-text">Buy Product</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/sales.html" class="menu-item text-gray-300 flex items-center" data-page="sales.html">
+            <i class="fas fa-chart-line w-6 text-center"></i>
+            <span class="ml-3 menu-text">Sales</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/logs.html" class="menu-item text-gray-300 flex items-center" data-page="logs.html">
+            <i class="fas fa-clipboard-list w-6 text-center"></i>
+            <span class="ml-3 menu-text">Logs</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/add_role.html" class="menu-item text-gray-300 flex items-center" data-page="add_cashier.html">
+            <i class="fas fa-user-plus w-6 text-center"></i>
+            <span class="ml-3 menu-text">Role Management</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/student_list.html" class="menu-item text-gray-300 flex items-center">
+            <i class="fas fa-users w-6 text-center"></i>
+            <span class="ml-3 menu-text">Student List</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Logout button at the bottom -->
+    <div class="p-4 border-t border-slate-700">
+      <button id="logoutBtn" class="w-full flex items-center justify-center px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition">
+        <i class="fas fa-sign-out-alt mr-2"></i>
+        <span class="menu-text">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main id="mainContent" class="flex-1 p-8 flex flex-col items-center space-y-8 transition-all duration-300">
+
+    <!-- Header & Batch Upload trigger -->
+    <div class="w-full max-w-3xl flex items-center justify-between">
+      <div>
+        <h1 class="text-4xl font-bold text-gray-800 mb-1">Register Card</h1>
+        <p class="text-gray-600">Register new students with RFID cards</p>
+        
+        <!-- Philippine Time Display -->
+        <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+          <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border">
+            <i class="fas fa-clock text-blue-500"></i>
+            <span class="font-medium text-gray-700">PH Time:</span>
+            <span id="philippineTime" class="ph-time-display font-mono"></span>
+          </div>
+          <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border">
+            <i class="fas fa-calendar text-green-500"></i>
+            <span id="philippineDate" class="text-gray-700 font-medium"></span>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <!-- Connect Arduino Button -->
+        <button id="connectArduinoBtn" 
+          class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg"
+          title="Click to connect to Arduino RFID scanner">
+          <i class="fas fa-microchip"></i>
+          Connect Arduino
+        </button>
+        <!-- Open Batch Upload Button -->
+        <button id="openBatchUploadBtn"
+          class="bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+          <i class="fas fa-file-excel"></i>
+          Batch Upload
+        </button>
+      </div>
+    </div>
+
+    <!-- Register Card form -->
+    <section id="register_card" class="w-full max-w-3xl">
+      <div class="form-card rounded-2xl shadow-2xl p-10">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-user-plus text-blue-500"></i>
+            Student Registration Form
+          </h2>
+          <div class="text-sm text-gray-500">
+            Last updated: <span id="formUpdateTime"></span>
+          </div>
+        </div>
+        
+        <form id="registerCardForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- Card Number with RFID Scanner Indicator -->
+          <div class="col-span-1 md:col-span-2">
+            <label class="block text-sm mb-2">
+              <i class="fas fa-id-card mr-1 text-blue-500"></i>
+              Card Number
+            </label>
+            <div class="relative input-wrapper" id="cardNumberContainer">
+              <i class="fas fa-id-card absolute left-4 top-4 text-gray-400 text-lg"></i>
+              <input id="card_number_register" type="text" name="card_number" placeholder="Scan or enter card number"
+                class="rfid-input p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                required pattern="\d*" title="Only numbers are allowed"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="10" minlength="10">
+            </div>
+            <p id="arduinoStatusMessage" class="text-sm text-red-600 mt-2 flex items-center">
+              <i class="fas fa-circle-xmark mr-2"></i> Arduino disconnected - Connect Arduino to scan cards
+            </p>
+          </div>
+
+          <!-- LRN -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-hashtag mr-1 text-blue-500"></i>
+              LRN
+            </label>
+            <div class="relative input-wrapper">
+              <i class="fas fa-hashtag absolute left-4 top-4 text-gray-400"></i>
+              <input id="student_lrn" type="text" name="student_lrn" placeholder="Learner Reference Number"
+                class="p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                required maxlength="12" pattern="\d*" title="Only numbers are allowed"
+                oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,12)" minlength="12">
+            </div>
+          </div>
+
+          <!-- First Name -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-user mr-1 text-blue-500"></i>
+              First Name
+            </label>
+            <div class="relative input-wrapper">
+              <i class="fas fa-user absolute left-4 top-4 text-gray-400"></i>
+              <input id="first_name_register" type="text" name="first_name" placeholder="First Name"
+                class="p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition" 
+                required
+                oninput="this.value = this.value.replace(/[^A-Za-z\s]/g, '')"
+                pattern="[A-Za-z\s]+"
+                title="Only letters and spaces are allowed">
+            </div>
+          </div>
+
+          <!-- Middle Name -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-user-alt mr-1 text-blue-500"></i>
+              Middle Name (Optional)
+            </label>
+            <div class="relative input-wrapper">
+              <i class="fas fa-user-alt absolute left-4 top-4 text-gray-400"></i>
+              <input id="middle_name_register" type="text" name="middle_name" placeholder="Middle Name"
+                class="p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                oninput="this.value = this.value.replace(/[^A-Za-z\s]/g, '')"
+                pattern="[A-Za-z\s]*"
+                title="Only letters and spaces are allowed">
+            </div>
+          </div>
+
+          <!-- Last Name -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-user mr-1 text-blue-500"></i>
+              Last Name
+            </label>
+            <div class="relative input-wrapper">
+              <i class="fas fa-user absolute left-4 top-4 text-gray-400"></i>
+              <input id="last_name_register" type="text" name="last_name" placeholder="Last Name"
+                class="p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition" 
+                required
+                oninput="this.value = this.value.replace(/[^A-Za-z\s]/g, '')"
+                pattern="[A-Za-z\s]+"
+                title="Only letters and spaces are allowed">
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-envelope mr-1 text-blue-500"></i>
+              Email
+            </label>
+            <div class="relative input-wrapper">
+              <i class="fas fa-envelope absolute left-4 top-4 text-gray-400"></i>
+              <input id="student_email" type="email" name="student_email" placeholder="student@example.com"
+                class="p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition" 
+                required
+                pattern="^[^\s@]+@[^\s@]+\.com$"
+                title="Email must end with .com">
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-lock mr-1 text-blue-500"></i>
+              Password
+            </label>
+            <div class="flex items-center gap-0">
+              <div class="relative input-wrapper flex-1">
+                <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                <input id="generate_password" type="password" name="generate_password" placeholder="Auto-generated"
+                  class="p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-l-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition" required/>
+              </div>
+              <button type="button" id="generateBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-4 rounded-r-xl font-semibold transition border-2 border-blue-500 text-lg">
+                Generate
+              </button>
+            </div>
+          </div>
+
+          <!-- Birthdate -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-calendar-alt mr-1 text-blue-500"></i>
+              Birthdate
+            </label>
+            <div class="relative input-wrapper">
+              <i class="fas fa-calendar-alt absolute left-4 top-4 text-gray-400"></i>
+              <input id="birthdate_register" type="date" name="card_holder_bod" placeholder="Select birthdate"
+                class="p-4 pl-12 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition" 
+                required
+                oncontextmenu="return false"
+                onpaste="return false">
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Student must be at least 10 years old</p>
+          </div>
+
+          <!-- Initial Balance -->
+          <div>
+            <label class="block text-sm mb-2">
+              <i class="fas fa-wallet mr-1 text-blue-500"></i>
+              Initial Balance
+            </label>
+            <div class="relative input-wrapper">
+              <span class="absolute left-4 top-4 text-gray-500 font-semibold text-lg">₱</span>
+              <input id="initial_balance" type="number" name="initial_balance" placeholder="0.00"
+                class="p-4 pl-10 pr-10 text-lg border-2 border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                required min="0" max="250" step="0.01" value="250" disabled
+                oncontextmenu="return false"
+                onpaste="return false">
+            </div>
+            <p class="text-xs text-red-500 mt-1 font-semibold">⚠️ Maximum allowed: ₱250.00</p>
+          </div>
+
+          <!-- Submit -->
+          <div class="col-span-1 md:col-span-2 mt-4">
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 text-xl rounded-xl font-bold transition shadow-lg">
+              <i class="fas fa-user-plus mr-2"></i>
+              Register Student
+            </button>
+          </div>
+
+          <!-- Hidden success/error divs (will use modals instead) -->
+          <div id="registerSuccess" class="hidden"></div>
+          <div id="registerError" class="hidden"></div>
+
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- Arduino Status Modal -->
+  <div id="arduinoStatusModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 px-4 backdrop-blur-sm">
+    <div class="p-8 bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-slideUp">
+      <div class="flex items-start justify-between mb-6">
+        <h2 class="text-3xl font-bold text-gray-800">Arduino Connection</h2>
+        <button id="closeArduinoStatusBtn" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fas fa-times fa-2x"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-6">
+        <div id="arduinoConnectionDetails" class="border-2 rounded-xl p-6 bg-gradient-to-br from-gray-50 to-white">
+          <p class="font-semibold text-lg">Status: <span id="modalConnectionStatus" class="text-red-500">Disconnected</span></p>
+          <p class="mt-3 text-gray-600">Port: <span id="modalPortName" class="font-medium">None</span></p>
+          <p class="text-gray-600">Baud Rate: <span class="font-medium">9600</span></p>
+          <p class="mt-3 text-sm text-gray-500">Last card read: <span id="modalLastCardRead" class="font-medium">None</span></p>
+        </div>
+        
+        <div>
+          <h3 class="font-semibold text-lg mb-3">Available Ports:</h3>
+          <ul id="modalPortsList" class="list-disc pl-6 space-y-2 bg-gray-50 p-4 rounded-lg">
+            <li class="text-gray-500">No ports detected</li>
+          </ul>
+        </div>
+        
+        <div class="bg-blue-50 p-6 rounded-xl border-2 border-blue-100">
+          <h3 class="font-semibold text-lg mb-3 text-blue-800">
+            <i class="fas fa-info-circle mr-2"></i>Troubleshooting:
+          </h3>
+          <ul class="list-disc pl-6 space-y-2 text-sm text-blue-900">
+            <li>Make sure Arduino is connected to your computer</li>
+            <li>Verify the RFID reader is properly connected to the Arduino</li>
+            <li>Try a different USB port or cable</li>
+            <li>Make sure the correct Arduino firmware is uploaded</li>
+          </ul>
+        </div>
+        
+        <div class="flex justify-end gap-3 pt-4">
+          <button id="refreshPortsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i> Refresh Ports
+          </button>
+          <button id="modalConnectBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+            <i class="fas fa-microchip"></i> Connect
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Upload Modal -->
+  <div id="batchUploadModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 px-4 backdrop-blur-sm">
+    <div class="p-8 bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-slideUp">
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800">Batch Upload</h2>
+          <p class="text-gray-600 mt-1">Upload multiple students via Excel</p>
+        </div>
+        <button id="closeBatchUploadBtn" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fas fa-times fa-2x"></i>
+        </button>
+      </div>
+
+      <div class="bg-blue-50 p-6 rounded-xl mb-6 border-2 border-blue-100">
+        <h3 class="font-semibold text-blue-800 mb-2">
+          <i class="fas fa-file-excel mr-2"></i>Required Excel Format:
+        </h3>
+        <p class="text-sm text-blue-900 mb-3">
+          Upload a .xlsx/.xls file with these headers in the first row:
+        </p>
+        <div class="bg-white p-3 rounded-lg font-mono text-xs text-gray-700 overflow-x-auto">
+          card_number, student_lrn, first_name, middle_name, last_name, student_email, generate_password, birthdate, initial_balance
+        </div>
+        <div class="mt-4 space-y-2 text-sm text-blue-900">
+          <p><i class="fas fa-check-circle mr-2 text-green-600"></i>Leave <strong>generate_password</strong> empty to auto-generate</p>
+          <p><i class="fas fa-check-circle mr-2 text-green-600"></i>Use <strong>YYYY-MM-DD</strong> format for birthdate</p>
+          <p><i class="fas fa-exclamation-triangle mr-2 text-orange-600"></i>Max initial balance: <strong>₱250.00</strong></p>
+          <p><i class="fas fa-info-circle mr-2 text-blue-600"></i>Names will be auto-capitalized</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-blue-400 transition">
+          <input id="excelFile" type="file" accept=".xlsx, .xls" class="w-full text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <button id="uploadExcelBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg flex-1">
+            <i class="fas fa-upload"></i>
+            Upload Excel File
+          </button>
+
+          <button id="downloadTemplateBtn" class="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-4 py-3 rounded-xl transition flex items-center gap-2 font-semibold">
+            <i class="fas fa-download"></i>
+            Download Template
+          </button>
+        </div>
+
+        <div id="excelUploadStatus" class="hidden mt-4 text-center text-sm"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+<div id="logoutConfirmationModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 px-4 backdrop-blur-sm">
+  <div class="p-8 bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slideUp">
+    <div class="flex items-start justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">Confirm Logout</h2>
+      <button id="closeLogoutModalBtn" class="text-gray-400 hover:text-gray-600 transition">
+        <i class="fas fa-times fa-lg"></i>
+      </button>
+    </div>
+    
+    <div class="space-y-6">
+      <div class="flex items-center justify-center">
+        <div class="bg-red-50 p-4 rounded-full">
+          <i class="fas fa-sign-out-alt text-red-500 text-4xl"></i>
+        </div>
+      </div>
+      
+      <div class="text-center">
+        <p class="text-lg text-gray-700 font-medium">Are you sure you want to logout?</p>
+        <p class="text-sm text-gray-500 mt-2">You will need to log in again to access the system.</p>
+      </div>
+      
+      <div class="flex justify-center gap-4 pt-2">
+        <button id="cancelLogoutBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button id="confirmLogoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Complete JavaScript Implementation -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize all functionality
+      initializeSidebar();
+      initializeLogoutModal();
+      initializePhilippineTime();
+      initializeArduinoModal();
+      initializeBatchUploadModal();
+      initializeRFIDScanner();
+      initializePageHighlight();
+    });
+
+    // Sidebar functionality
+    function initializeSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      const menuItems = document.querySelectorAll('.menu-item');
+      
+      // Set active menu item based on current page
+      const currentPage = window.location.pathname.split('/').pop();
+      menuItems.forEach(item => {
+        if (item.getAttribute('data-page') === currentPage) {
+          item.classList.add('active');
+        }
+      });
+      
+      // Toggle sidebar
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('sidebar-collapsed');
+        mainContent.classList.toggle('main-expanded');
+        
+        // Change toggle button icon
+        const icon = toggleBtn.querySelector('i');
+        if (sidebar.classList.contains('sidebar-collapsed')) {
+          icon.classList.remove('fa-chevron-left');
+          icon.classList.add('fa-chevron-right');
+        } else {
+          icon.classList.remove('fa-chevron-right');
+          icon.classList.add('fa-chevron-left');
+        }
+      });
+    }
+
+    // Logout Modal functionality
+    function initializeLogoutModal() {
+      const logoutBtn = document.getElementById('logoutBtn');
+      const logoutModal = document.getElementById('logoutConfirmationModal');
+      const closeLogoutModalBtn = document.getElementById('closeLogoutModalBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      
+      // Show logout modal when logout button is clicked
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        logoutModal.classList.remove('hidden');
+        logoutModal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+      });
+      
+      // Close modal when close button is clicked
+      closeLogoutModalBtn.addEventListener('click', function() {
+        logoutModal.classList.add('hidden');
+        logoutModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+      });
+      
+      // Close modal when cancel button is clicked
+      cancelLogoutBtn.addEventListener('click', function() {
+        logoutModal.classList.add('hidden');
+        logoutModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+      });
+      
+      // Perform logout when confirm button is clicked
+      confirmLogoutBtn.addEventListener('click', function() {
+        localStorage.removeItem('cashierUser');
+        window.location.href = '/SMARTBITE-ADMIN/login.html';
+      });
+      
+      // Close modal when clicking outside
+      logoutModal.addEventListener('click', function(e) {
+        if (e.target === logoutModal) {
+          logoutModal.classList.add('hidden');
+          logoutModal.classList.remove('flex');
+          document.body.classList.remove('overflow-hidden');
+        }
+      });
+    }
+
+    // Philippine Time functionality
+    function initializePhilippineTime() {
+      function updatePhilippineTime() {
+        const now = new Date();
+        
+        const timeOptions = { 
+          timeZone: 'Asia/Manila',
+          hour12: true,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        };
+        
+        const dateOptions = {
+          timeZone: 'Asia/Manila',
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        };
+
+        const shortDateOptions = {
+          timeZone: 'Asia/Manila',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        };
+        
+        try {
+          const timeString = now.toLocaleTimeString('en-PH', timeOptions);
+          const dateString = now.toLocaleDateString('en-PH', dateOptions);
+          const shortDateString = now.toLocaleDateString('en-PH', shortDateOptions);
+          
+          // Update all time displays
+          const timeElement = document.getElementById('philippineTime');
+          const dateElement = document.getElementById('philippineDate');
+          const formUpdateElement = document.getElementById('formUpdateTime');
+          
+          if (timeElement) timeElement.textContent = timeString;
+          if (dateElement) dateElement.textContent = shortDateString;
+          if (formUpdateElement) formUpdateElement.textContent = timeString;
+        } catch (error) {
+          console.error('Error updating Philippine time:', error);
+          // Fallback to local time
+          const fallbackTime = now.toLocaleTimeString('en-PH', { 
+            hour12: true,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          const fallbackDate = now.toLocaleDateString('en-PH', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+          
+          document.getElementById('philippineTime').textContent = fallbackTime + ' (Local)';
+          document.getElementById('philippineDate').textContent = fallbackDate;
+          document.getElementById('formUpdateTime').textContent = fallbackTime;
+        }
+      }
+
+      // Update time every second
+      setInterval(updatePhilippineTime, 1000);
+      updatePhilippineTime(); // Initial call
+    }
+
+    // Arduino Modal functionality
+    function initializeArduinoModal() {
+      const statusBtn = document.getElementById('connectArduinoBtn');
+      const statusModal = document.getElementById('arduinoStatusModal');
+      const closeStatusBtn = document.getElementById('closeArduinoStatusBtn');
+      const refreshPortsBtn = document.getElementById('refreshPortsBtn');
+      const modalConnectBtn = document.getElementById('modalConnectBtn');
+      
+      let lastCardRead = 'None';
+      let availablePorts = [];
+      
+      statusBtn.addEventListener('click', (e) => {
+        const isConnectAttempt = e && e.target && e.target.innerText && 
+            e.target.innerText.toLowerCase().includes('connect arduino');
+        
+        const isConnected = statusBtn.classList.contains('bg-green-500');
+        
+        if (isConnectAttempt && !isConnected) {
+          return;
+        }
+        
+        statusModal.classList.remove('hidden');
+        statusModal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+        
+        updatePortsList();
+      });
+      
+      closeStatusBtn.addEventListener('click', () => {
+        statusModal.classList.add('hidden');
+        statusModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+      });
+      
+      statusModal.addEventListener('click', (e) => {
+        if (e.target === statusModal) {
+          statusModal.classList.add('hidden');
+          statusModal.classList.remove('flex');
+          document.body.classList.remove('overflow-hidden');
+        }
+      });
+      
+      refreshPortsBtn.addEventListener('click', async () => {
+        refreshPortsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        refreshPortsBtn.disabled = true;
+        
+        await updatePortsList();
+        
+        refreshPortsBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Ports';
+        refreshPortsBtn.disabled = false;
+      });
+      
+      modalConnectBtn.addEventListener('click', async () => {
+        if (!window.arduinoDetector) return;
+        
+        modalConnectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+        modalConnectBtn.disabled = true;
+        
+        const connected = await window.arduinoDetector.connect();
+        
+        if (connected) {
+          document.getElementById('modalConnectionStatus').textContent = 'Connected';
+          document.getElementById('modalConnectionStatus').className = 'text-green-500';
+          modalConnectBtn.innerHTML = '<i class="fas fa-check"></i> Connected';
+        } else {
+          document.getElementById('modalConnectionStatus').textContent = 'Failed to Connect';
+          document.getElementById('modalConnectionStatus').className = 'text-red-500';
+          modalConnectBtn.innerHTML = '<i class="fas fa-microchip"></i> Connect';
+          modalConnectBtn.disabled = false;
+        }
+      });
+      
+      async function updatePortsList() {
+        const portsList = document.getElementById('modalPortsList');
+        if (!portsList) return;
+        
+        if (window.arduinoDetector && window.arduinoDetector.listPorts) {
+          try {
+            portsList.innerHTML = '<li class="text-gray-500">Scanning for ports...</li>';
+            
+            availablePorts = await window.arduinoDetector.listPorts();
+            
+            if (availablePorts && availablePorts.length > 0) {
+              portsList.innerHTML = '';
+              availablePorts.forEach(port => {
+                const li = document.createElement('li');
+                li.textContent = port.name || port.path || 'Unknown port';
+                portsList.appendChild(li);
+              });
+            } else {
+              portsList.innerHTML = '<li class="text-gray-500">No ports detected</li>';
+            }
+          } catch (err) {
+            portsList.innerHTML = '<li class="text-red-500">Error detecting ports</li>';
+            console.error('Error listing ports:', err);
+          }
+        }
+      }
+      
+      window.updateCardReadInfo = function(cardNumber) {
+        lastCardRead = cardNumber || 'None';
+        const cardReadElement = document.getElementById('modalLastCardRead');
+        if (cardReadElement) {
+          cardReadElement.textContent = lastCardRead;
+        }
+      };
+      
+      window.updatePortInfo = function(port) {
+        const portNameElement = document.getElementById('modalPortName');
+        if (portNameElement && port) {
+          portNameElement.textContent = port.name || port.path || 'Unknown';
+        }
+      };
+    }
+
+    // Batch Upload Modal functionality
+    function initializeBatchUploadModal() {
+      const openBtn = document.getElementById('openBatchUploadBtn');
+      const modal = document.getElementById('batchUploadModal');
+      const closeBtn = document.getElementById('closeBatchUploadBtn');
+      const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+
+      openBtn.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+      });
+
+      closeBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          document.body.classList.remove('overflow-hidden');
+        }
+      });
+
+      // Excel template generator
+      downloadTemplateBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const headers = [
+          "card_number",
+          "student_lrn",
+          "first_name",
+          "middle_name",
+          "last_name",
+          "student_email",
+          "generate_password",
+          "birthdate",
+          "initial_balance"
+        ];
+
+        const exampleRow = [
+          "0000000001",
+          "123456789012",
+          "Juan",
+          "Santos",
+          "Dela Cruz",
+          "juan@example.com",
+          "",
+          "2010-05-20",
+          "250"
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet([headers, exampleRow]);
+        ws["A2"].z = "@";
+        ws["B2"].z = "@";
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template");
+        XLSX.writeFile(wb, "StudentUploadTemplate.xlsx");
+      });
+    }
+
+    // RFID Scanner functionality
+    function initializeRFIDScanner() {
+      const cardInput = document.getElementById('card_number_register');
+      if (!cardInput) return;
+
+      let rfidBuffer = '';
+      let rfidTimeout = null;
+      const RFID_DELAY = 100;
+      
+      let arduinoDetector = null;
+      let isConnecting = false;
+      
+      function updateArduinoStatus(connected, connecting = false) {
+        const connectBtn = document.getElementById('connectArduinoBtn');
+        const statusMessage = document.getElementById('arduinoStatusMessage');
+        
+        if (!connectBtn) return;
+        
+        if (connected) {
+          connectBtn.innerHTML = '<i class="fas fa-microchip"></i> Arduino Connected';
+          connectBtn.setAttribute('title', 'Arduino is connected and ready to scan cards');
+          connectBtn.className = 'bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg';
+          
+          if (statusMessage) {
+            statusMessage.className = 'text-sm text-green-600 mt-2 flex items-center font-semibold';
+            statusMessage.innerHTML = '<i class="fas fa-check-circle mr-2"></i> RFID scanner active - Ready to scan';
+          }
+        } else if (connecting) {
+          connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+          connectBtn.setAttribute('title', 'Connecting to Arduino...');
+          connectBtn.className = 'bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg';
+          connectBtn.disabled = true;
+          
+          if (statusMessage) {
+            statusMessage.className = 'text-sm text-yellow-600 mt-2 flex items-center font-semibold';
+            statusMessage.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Connecting to Arduino...';
+          }
+        } else {
+          connectBtn.innerHTML = '<i class="fas fa-microchip"></i> Connect Arduino';
+          connectBtn.setAttribute('title', 'Click to connect to Arduino RFID scanner');
+          connectBtn.className = 'bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg';
+          connectBtn.disabled = false;
+          
+          if (statusMessage) {
+            statusMessage.className = 'text-sm text-red-600 mt-2 flex items-center font-semibold';
+            statusMessage.innerHTML = '<i class="fas fa-circle-xmark mr-2"></i> Arduino disconnected - Connect Arduino to scan cards';
+          }
+        }
+      }
+      
+      function initArduinoDetector() {
+        arduinoDetector = new ArduinoDetector({
+          debug: true,
+          baudRate: 9600,
+          autoReconnect: true,
+          
+          rfidReadCallback: (cardNumber) => {
+            console.log('RFID Card detected:', cardNumber);
+            
+            let formattedCardNumber = cardNumber.trim();
+            if (/^\d+$/.test(formattedCardNumber)) {
+              while (formattedCardNumber.length < 10) {
+                formattedCardNumber = "0" + formattedCardNumber;
+              }
+              if (formattedCardNumber.length > 10) {
+                formattedCardNumber = formattedCardNumber.substring(formattedCardNumber.length - 10);
+              }
+            }
+            
+            cardInput.value = formattedCardNumber;
+            cardInput.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            cardInput.classList.add('border-green-500', 'bg-green-50');
+            setTimeout(() => {
+              cardInput.classList.remove('bg-green-50');
+            }, 1500);
+            
+            try {
+              const beep = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLXPM+dF5MwgZWL/z3og9CQxIt/zkkkMHAj6y+uiYRgT9M6v47JtHAPovpPvvnEj+9iuh/fCdSPv0KZ///55I+PEnngDwoEj18iWdAfShSPPzJJwC9aJI8fQimwL2o0jw9SGbA/ijR+/2IZoE+aRI7vcgmQT7pEjt+B+ZBPykSOz5H5gF/aNH7PofmAX9o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf/jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoelwX/o0bs+h6XBf+jRuz6HpcF/6NG7PoeVwY=");
+              beep.play();
+            } catch (e) {
+              console.log("Browser audio not supported");
+            }
+            
+            if (window.updateCardReadInfo) {
+              window.updateCardReadInfo(formattedCardNumber);
+            }
+            
+            const nextField = cardInput.closest('form').querySelector('#student_lrn');
+            if (nextField) {
+              setTimeout(() => nextField.focus(), 100);
+            }
+          },
+          
+          connectionCallback: (port) => {
+            console.log('Arduino connected!');
+            updateArduinoStatus(true);
+            isConnecting = false;
+            
+            if (window.updatePortInfo) {
+              window.updatePortInfo(port);
+            }
+            
+            const modalStatus = document.getElementById('modalConnectionStatus');
+            if (modalStatus) {
+              modalStatus.textContent = 'Connected';
+              modalStatus.className = 'text-green-500';
+            }
+          },
+          
+          disconnectionCallback: () => {
+            console.log('Arduino disconnected');
+            updateArduinoStatus(false);
+            isConnecting = false;
+            
+            const modalStatus = document.getElementById('modalConnectionStatus');
+            if (modalStatus) {
+              modalStatus.textContent = 'Disconnected';
+              modalStatus.className = 'text-red-500';
+            }
+          }
+        });
+        
+        const connectBtn = document.getElementById('connectArduinoBtn');
+        if (connectBtn) {
+          connectBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (arduinoDetector && !isConnecting) {
+              isConnecting = true;
+              updateArduinoStatus(false, true);
+              
+              const connected = await arduinoDetector.connect();
+              
+              isConnecting = false;
+              updateArduinoStatus(connected);
+            }
+          });
+        }
+        
+        setTimeout(() => {
+          if (arduinoDetector) {
+            isConnecting = true;
+            updateArduinoStatus(false, true);
+            arduinoDetector.connect().then(connected => {
+              isConnecting = false;
+              updateArduinoStatus(connected);
+            });
+          }
+        }, 1000);
+      }
+      
+      if (document.readyState === 'complete') {
+        initArduinoDetector();
+      } else {
+        window.addEventListener('load', initArduinoDetector);
+      }
+
+      cardInput.focus();
+
+      function isTextEditable(el) {
+        return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+      }
+
+      function handleRFIDInput(data) {
+        if (rfidTimeout) clearTimeout(rfidTimeout);
+        
+        rfidBuffer += data;
+        
+        rfidTimeout = setTimeout(() => {
+          if (rfidBuffer.length > 0) {
+            cardInput.value = rfidBuffer;
+            cardInput.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            const nextField = cardInput.closest('form').querySelector('#student_lrn');
+            if (nextField) {
+              setTimeout(() => nextField.focus(), 100);
+            }
+            
+            rfidBuffer = '';
+          }
+        }, RFID_DELAY + 50);
+      }
+
+      document.addEventListener('keydown', function(e) {
+        const active = document.activeElement;
+        const isEditable = isTextEditable(active);
+        const isDigit = /^[0-9]$/.test(e.key);
+        
+        if (!isEditable && isDigit) {
+          e.preventDefault();
+          cardInput.focus();
+          handleRFIDInput(e.key);
+        }
+        
+        if (isEditable && active !== cardInput) {
+          return;
+        }
+        
+        if (active === cardInput && isDigit) {
+          rfidBuffer = '';
+        }
+      });
+
+      document.addEventListener('paste', function(e){
+        const active = document.activeElement;
+        const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+        
+        if (!isTextEditable(active) && pastedData.length > 0) {
+          e.preventDefault();
+          cardInput.focus();
+          cardInput.value = pastedData;
+          cardInput.dispatchEvent(new Event('input', { bubbles: true }));
+          
+          const nextField = cardInput.closest('form').querySelector('#student_lrn');
+          if (nextField) {
+            setTimeout(() => nextField.focus(), 100);
+          }
+        }
+      });
+
+      document.querySelectorAll('input:not(#card_number_register)').forEach(input => {
+        input.addEventListener('focus', function() {
+          if (rfidBuffer.length > 0) {
+            cardInput.focus();
+          }
+        });
+      });
+    }
+
+    // Page highlight functionality
+    function initializePageHighlight() {
+      const currentPage = window.location.pathname.split("/").pop();
+      document.querySelectorAll("#sidebar a").forEach(link => {
+        if(link.getAttribute('data-page') === currentPage){
+          link.classList.add("active");
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

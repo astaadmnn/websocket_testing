@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Return Money | SmartBite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="../css/returnmoney.css">
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
+<script src="../script/firebase_conn.js"></script>
+<script type="module" src="../script/role_access.js"></script>
+
+<style>
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fadeInUp {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
+  /* Sidebar transition */
+  #sidebar {
+    transition: all 0.3s ease;
+  }
+  
+  .sidebar-collapsed {
+    width: 70px !important;
+  }
+  
+  .sidebar-collapsed .menu-text,
+  .sidebar-collapsed .logo-text {
+    display: none;
+  }
+  
+  .sidebar-collapsed .menu-item {
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .sidebar-collapsed .toggle-btn {
+    transform: rotate(180deg);
+  }
+  
+  .main-expanded {
+    margin-left: 70px;
+  }
+  
+  .menu-item {
+    transition: all 0.2s ease;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .menu-item:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: translateX(2px);
+  }
+  
+  .menu-item.active {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+  }
+  
+  /* Processing Modal Styles */
+  .processing-spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid #ffffff;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Logout Modal Animation */
+  .animate-slideUp {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+</head>
+<body class="bg-gray-100 flex min-h-screen font-inter">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="bg-slate-900 w-64 min-h-screen flex flex-col shadow-lg relative">
+    <!-- Toggle Button -->
+    <div class="absolute -right-3 top-6 z-10">
+      <button id="sidebarToggle" class="bg-slate-800 text-white p-2 rounded-full shadow-md hover:bg-slate-700 transition-colors toggle-btn">
+        <i class="fas fa-chevron-left text-sm"></i>
+      </button>
+    </div>
+    
+    <!-- Logo Section -->
+    <div class="bg-slate-800 p-4 flex items-center justify-center space-x-3">
+      <i class="fas fa-wallet text-2xl text-blue-500"></i>
+      <h1 class="text-xl font-bold text-white logo-text">SmartBite</h1>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <ul class="space-y-1 px-2">
+        <li>
+          <a href="/public/index.html" class="menu-item text-gray-300 flex items-center" data-page="index.html">
+            <i class="fas fa-credit-card w-6 text-center"></i>
+            <span class="ml-3 menu-text">Register RFID</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/load_rfid.html" class="menu-item text-gray-300 flex items-center" data-page="load_rfid.html">
+            <i class="fas fa-wallet w-6 text-center"></i>
+            <span class="ml-3 menu-text">Load Card</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/return_money.html" class="menu-item text-gray-300 flex items-center active" data-page="return_money.html">
+            <i class="fas fa-money-bill-wave w-6 text-center"></i>
+            <span class="ml-3 menu-text">Withdraw Money</span>
+          </a>
+        </li>
+        <li>
+          <a href="/public/products.html" class="menu-item text-gray-300 flex items-center" data-page="products.html">
+            <i class="fas fa-box w-6 text-center"></i>
+            <span class="ml-3 menu-text">Add Product</span>
+          </a>
+        </li>
+        <li>
+          <a href="/public/buy_products.html" class="menu-item text-gray-300 flex items-center" data-page="buy_products.html">
+            <i class="fas fa-shopping-cart w-6 text-center"></i>
+            <span class="ml-3 menu-text">Buy Product</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/sales.html" class="menu-item text-gray-300 flex items-center" data-page="sales.html">
+            <i class="fas fa-chart-line w-6 text-center"></i>
+            <span class="ml-3 menu-text">Sales</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/logs.html" class="menu-item text-gray-300 flex items-center" data-page="logs.html">
+            <i class="fas fa-clipboard-list w-6 text-center"></i>
+            <span class="ml-3 menu-text">Logs</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/add_role.html" class="menu-item text-gray-300 flex items-center" data-page="add_role.html">
+            <i class="fas fa-user-plus w-6 text-center"></i>
+            <span class="ml-3 menu-text">Role Management</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/student_list.html" class="menu-item text-gray-300 flex items-center">
+            <i class="fas fa-users w-6 text-center"></i>
+            <span class="ml-3 menu-text">Student List</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Logout button at the bottom -->
+    <div class="p-4 border-t border-slate-700">
+      <button id="logoutBtn" class="w-full flex items-center justify-center px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition">
+        <i class="fas fa-sign-out-alt mr-2"></i>
+        <span class="menu-text">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Logout Confirmation Modal -->
+  <div id="logoutConfirmationModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 px-4 backdrop-blur-sm">
+    <div class="p-8 bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slideUp">
+      <div class="flex items-start justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Confirm Logout</h2>
+        <button id="closeLogoutModalBtn" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fas fa-times fa-lg"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-6">
+        <div class="flex items-center justify-center">
+          <div class="bg-red-50 p-4 rounded-full">
+            <i class="fas fa-sign-out-alt text-red-500 text-4xl"></i>
+          </div>
+        </div>
+        
+        <div class="text-center">
+          <p class="text-lg text-gray-700 font-medium">Are you sure you want to logout?</p>
+          <p class="text-sm text-gray-500 mt-2">You will need to log in again to access the system.</p>
+        </div>
+        
+        <div class="flex justify-center gap-4 pt-2">
+          <button id="cancelLogoutBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button id="confirmLogoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Section -->
+  <section id="mainContent" class="flex-1 flex flex-col items-center justify-center p-6 transition-all duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-fadeInUp">
+
+      <!-- Title -->
+      <div class="flex items-center justify-center mb-6 space-x-3 animate-fadeInUp">
+        <i class="fas fa-money-bill-wave text-3xl text-blue-500"></i>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Return Money</h1>
+      </div>
+
+      <!-- Info Display -->
+      <div class="bg-gray-50 rounded-xl p-4 mb-5 space-y-2 animate-fadeInUp">
+        <p class="text-gray-700 flex items-center"><i class="fas fa-coins mr-2 text-yellow-500"></i> Balance: <span id="current_balance" class="font-semibold ml-1">0.00</span></p>
+        <p class="text-gray-700 flex items-center"><i class="fas fa-user mr-2 text-blue-500"></i> Name: <span id="card_holder_name" class="font-semibold ml-1">-</span></p>
+        <p class="text-gray-700 flex items-center"><i class="fas fa-id-card mr-2 text-green-500"></i> LRN: <span id="lrn" class="font-semibold ml-1">-</span></p>
+      </div>
+
+      <!-- Form -->
+      <form id="returnMoneyForm" class="flex flex-col space-y-4 animate-fadeInUp">
+
+        <!-- Card Number -->
+        <div class="relative">
+          <i class="fas fa-credit-card absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input id="card_number_return" type="text" placeholder="Card Number"
+                 class="p-4 pl-10 text-lg border border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 hover:shadow-md"
+                 required pattern="\d*" title="Only numbers allowed">
+          <div id="cardValidationIcon" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center"></div>
+          <p id="cardFeedback" class="mt-1 text-sm transition-colors duration-300"></p>
+        </div>
+
+        <!-- Return Amount -->
+        <div class="relative">
+          <i class="fas fa-undo absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input id="return_balance_input" type="text" placeholder="Return Amount"
+                 class="p-4 pl-10 text-lg border border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 hover:shadow-md" disabled>
+          <div id="amountValidationIcon" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center"></div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white p-4 text-lg rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-md" disabled>
+          Return Money
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Processing Modal -->
+  <div id="processingModal" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center z-50">
+    <div class="modal-content bg-white rounded-2xl shadow-2xl p-10 w-11/12 max-w-md transform scale-90 opacity-0 transition-all duration-300">
+      <div class="flex flex-col items-center">
+        <div class="w-20 h-20 flex items-center justify-center rounded-full bg-blue-100 mb-6">
+          <div class="processing-spinner"></div>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Processing Withdrawal</h2>
+        <p class="text-gray-700 text-lg leading-relaxed text-center mb-2">Please wait while we process your request.</p>
+        <p class="text-gray-600 text-center">This may take a few moments...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div id="successModal" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center z-50">
+    <div class="modal-content bg-white rounded-2xl shadow-2xl p-10 w-11/12 max-w-2xl transform scale-90 opacity-0 transition-all duration-300">
+      <div class="flex flex-col items-center">
+        <div class="w-20 h-20 flex items-center justify-center rounded-full bg-green-100 mb-6">
+          <i class="fas fa-check-circle text-green-600 text-4xl"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">Success!</h2>
+        <div id="modalMessage" class="text-gray-700 text-lg leading-relaxed w-full"></div>
+        <button id="closeModalBtn" class="bg-green-600 text-white font-semibold px-8 py-3 rounded-full hover:bg-green-700 transition-colors mt-6">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      const menuItems = document.querySelectorAll('.menu-item');
+      
+      // Set active menu item based on current page
+      const currentPage = window.location.pathname.split('/').pop();
+      menuItems.forEach(item => {
+        if (item.getAttribute('data-page') === currentPage) {
+          item.classList.add('active');
+        }
+      });
+      
+      // Toggle sidebar
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('sidebar-collapsed');
+        mainContent.classList.toggle('main-expanded');
+        
+        // Change toggle button icon
+        const icon = toggleBtn.querySelector('i');
+        if (sidebar.classList.contains('sidebar-collapsed')) {
+          icon.classList.remove('fa-chevron-left');
+          icon.classList.add('fa-chevron-right');
+        } else {
+          icon.classList.remove('fa-chevron-right');
+          icon.classList.add('fa-chevron-left');
+        }
+      });
+      
+      // Initialize logout modal
+      initializeLogoutModal();
+    });
+
+    // Logout functionality with modal
+    function initializeLogoutModal() {
+      const logoutBtn = document.getElementById('logoutBtn');
+      const logoutModal = document.getElementById('logoutConfirmationModal');
+      const closeLogoutModalBtn = document.getElementById('closeLogoutModalBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+
+      if (!logoutBtn || !logoutModal) {
+        console.log('Logout elements not found');
+        return;
+      }
+
+      // Remove any existing event listeners
+      const newLogoutBtn = logoutBtn.cloneNode(true);
+      logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+
+      // Get fresh references
+      const refreshedLogoutBtn = document.getElementById('logoutBtn');
+
+      // Show logout modal when logout button is clicked
+      refreshedLogoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Logout button clicked - showing modal');
+        logoutModal.classList.remove('hidden');
+        logoutModal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+      });
+
+      // Close modal when close button is clicked
+      closeLogoutModalBtn.addEventListener('click', function() {
+        console.log('Close logout modal');
+        logoutModal.classList.add('hidden');
+        logoutModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+      });
+
+      // Close modal when cancel button is clicked
+      cancelLogoutBtn.addEventListener('click', function() {
+        console.log('Cancel logout');
+        logoutModal.classList.add('hidden');
+        logoutModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+      });
+
+      // Perform logout when confirm button is clicked
+      confirmLogoutBtn.addEventListener('click', function() {
+        console.log('Confirming logout');
+        
+        // Show processing state
+        confirmLogoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+        confirmLogoutBtn.disabled = true;
+
+        // Clear local storage
+        localStorage.removeItem('cashierUser');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userName');
+        sessionStorage.clear();
+
+        // Redirect to login page
+        window.location.href = '/SMARTBITE-ADMIN/login.html';
+      });
+
+      // Close modal when clicking outside
+      logoutModal.addEventListener('click', function(e) {
+        if (e.target === logoutModal) {
+          console.log('Clicked outside modal - closing');
+          logoutModal.classList.add('hidden');
+          logoutModal.classList.remove('flex');
+          document.body.classList.remove('overflow-hidden');
+        }
+      });
+    }
+
+    // Modal control functions
+    function showProcessingModal() {
+      const modal = document.getElementById('processingModal');
+      const modalContent = modal.querySelector('.modal-content');
+      
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modalContent.style.transform = 'scale(1)';
+        modalContent.style.opacity = '1';
+      }, 10);
+    }
+
+    function hideProcessingModal() {
+      const modal = document.getElementById('processingModal');
+      const modalContent = modal.querySelector('.modal-content');
+      
+      modalContent.style.transform = 'scale(0.9)';
+      modalContent.style.opacity = '0';
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function showSuccessModal(message) {
+      const modal = document.getElementById('successModal');
+      const modalContent = modal.querySelector('.modal-content');
+      const modalMessage = document.getElementById('modalMessage');
+      
+      modalMessage.innerHTML = message;
+      modal.classList.remove('hidden');
+      
+      setTimeout(() => {
+        modalContent.style.transform = 'scale(1)';
+        modalContent.style.opacity = '1';
+      }, 10);
+      
+      // Close modal when OK button is clicked
+      document.getElementById('closeModalBtn').onclick = function() {
+        modalContent.style.transform = 'scale(0.9)';
+        modalContent.style.opacity = '0';
+        
+        setTimeout(() => {
+          modal.classList.add('hidden');
+        }, 300);
+      };
+    }
+  </script>
+  
+  <script type="module" src="../SMARTBITE-ADMIN/return_money.js"></script>
+  <script src="../script/side-bar-toggle.js"></script>
+</body>
+</html>

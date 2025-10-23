@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartBite RFID Test Utility</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Arduino Detector Script -->
+  <script src="../script/arduino_detector.js"></script>
+  
+  <style>
+    .card-entry {
+      background-color: #f0fff4;
+      border-left: 4px solid #48bb78;
+      padding: 8px;
+      margin: 4px 0;
+    }
+    
+    .log-entry {
+      padding: 4px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: .5;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">SmartBite RFID Test Utility</h1>
+        <div class="flex items-center">
+          <span class="mr-2">Status:</span>
+          <span id="status" class="text-red-500 font-bold">Disconnected</span>
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Card Reader</h2>
+        <div class="border rounded-lg bg-gray-50 p-4">
+          <p class="text-gray-600 mb-2">Last Card Read:</p>
+          <div id="cardNumber" class="text-xl font-bold p-4 text-center border rounded bg-gray-100">No card read yet</div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-700 mb-2">Card History</h2>
+          <div id="cardHistory" class="border rounded-lg bg-gray-50 p-2 h-64 overflow-y-auto">
+            <div class="p-4 text-gray-500 text-center">No cards read yet</div>
+          </div>
+        </div>
+        
+        <div>
+          <h2 class="text-lg font-semibold text-gray-700 mb-2">Log</h2>
+          <div id="log" class="border rounded-lg bg-gray-50 p-2 h-64 overflow-y-auto">
+            <div class="log-entry">
+              <span class="text-gray-500">[System]</span> Waiting for Arduino connection...
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-6 flex justify-between">
+        <div>
+          <button id="clearButton" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2">
+            Clear Log
+          </button>
+        </div>
+        <div>
+          <button id="connectButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            Connect Arduino
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Troubleshooting</h2>
+      
+      <div class="space-y-4">
+        <div class="p-4 border-l-4 border-blue-500 bg-blue-50">
+          <h3 class="font-medium">Connection Issues</h3>
+          <ul class="mt-2 list-disc list-inside text-gray-600">
+            <li>Make sure your Arduino is connected to your computer</li>
+            <li>Check that you have the correct Arduino sketch uploaded</li>
+            <li>Try a different USB cable or port</li>
+            <li>Ensure no other programs are using the serial port</li>
+          </ul>
+        </div>
+        
+        <div class="p-4 border-l-4 border-yellow-500 bg-yellow-50">
+          <h3 class="font-medium">RFID Reader Issues</h3>
+          <ul class="mt-2 list-disc list-inside text-gray-600">
+            <li>Verify all wiring connections between Arduino and RFID module</li>
+            <li>Check that the RFID module is powered correctly (3.3V)</li>
+            <li>Try placing the card directly on the reader surface</li>
+            <li>Move away from sources of electromagnetic interference</li>
+          </ul>
+        </div>
+        
+        <div class="p-4 border-l-4 border-green-500 bg-green-50">
+          <h3 class="font-medium">Card Format</h3>
+          <p class="mt-2 text-gray-600">Card numbers must be exactly 10 digits for SmartBite system compatibility. The Arduino sketch automatically formats the RFID card UID to match this requirement.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- RFID Test Script -->
+  <script src="rfid_test.js"></script>
+</body>
+</html>

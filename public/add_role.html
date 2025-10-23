@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Role Management | SmartBite</title>
+  
+  <!-- Icons & Styles -->
+  <script src="https://kit.fontawesome.com/6dc93004d4.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link rel="stylesheet" href="../css/buy_products.css"/>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
+  <script type="module" src="../script/firebase_conn.js"></script>
+  <script type="module" src="../data_insertion/product_crud.js" defer></script>
+  <script type="module" src="../SMARTBITE-ADMIN/add_role.js" defer></script>
+  <script type="module" src="../script/role_access.js"></script>
+
+  <style>
+    /* Smooth hover animations for table rows */
+    tbody tr {
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    tbody tr:hover {
+      background-color: #f3f4f6;
+      transform: scale(1.01);
+    }
+
+    /* Modal content animation */
+    .modal-scale {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(0.95) translateY(-10px);
+      opacity: 0;
+    }
+    .modal-scale.show {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    /* Button hover effects */
+    .btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    /* Form styling */
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    
+    .form-input:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+      border-color: transparent;
+    }
+    
+    .input-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+    }
+    
+    .btn-primary {
+      background-color: #2563eb;
+      color: white;
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background-color: #4b5563;
+      color: white;
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #374151;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .menu-item {
+      display: flex;
+      align-items: center;
+      transition: all 0.2s ease;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      color: #d1d5db;
+      text-decoration: none;
+    }
+    
+    .menu-item:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+      transform: translateX(2px);
+    }
+    
+    .menu-item.active {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+    
+    .error-message {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    .success-message {
+      color: #10b981;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    .role-badge {
+      padding: 0.25rem 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.75rem;
+      line-height: 1.25rem;
+      font-weight: 600;
+      border-radius: 9999px;
+    }
+    
+    .role-super-admin {
+      background-color: #f3e8ff;
+      color: #6b21a8;
+    }
+    
+    .role-accountant {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+    
+    .role-it {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .role-cashier {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    
+    .pagination-btn {
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid #d1d5db;
+      background-color: white;
+      color: #374151;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .pagination-btn:hover {
+      background-color: #f9fafb;
+    }
+    
+    .pagination-btn.active {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+    
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .stats-card {
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      border-left-width: 4px;
+    }
+    
+    /* Focus states for accessibility */
+    .form-input:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    }
+    
+    button:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    /* Hidden utility */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Role filter button styles */
+    .role-filter-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-align: center;
+      border-bottom-width: 2px;
+      border-color: transparent;
+      color: #6b7280;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .role-filter-btn:hover {
+      color: #374151;
+      border-color: #d1d5db;
+    }
+    
+    .role-filter-btn.active {
+      color: #2563eb;
+      border-color: #2563eb;
+    }
+
+    /* Center the form section */
+    .center-form {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .form-container {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    /* Philippine Time Display */
+    .ph-time-display {
+      background: linear-gradient(135deg, #0055A4 0%, #BF0A30 50%, #FFFFFF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+
+    /* Sidebar transition */
+    #sidebar {
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-collapsed {
+      width: 70px !important;
+    }
+
+    .sidebar-collapsed .menu-text,
+    .sidebar-collapsed .logo-text {
+      display: none;
+    }
+
+    .sidebar-collapsed .menu-item {
+      justify-content: center;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .toggle-btn {
+      transform: rotate(180deg);
+    }
+
+    .main-expanded {
+      margin-left: 70px;
+    }
+
+    /* Password reset section animation */
+    #passwordResetSection {
+      transition: all 0.3s ease-in-out;
+      max-height: 0;
+      overflow: hidden;
+    }
+
+    #passwordResetSection:not(.hidden) {
+      max-height: 200px;
+    }
+
+    /* User summary in modal */
+    #editUserSummary {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd;
+    }
+
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem;
+      color: white;
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+      max-width: 400px;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast.success {
+      background-color: #10b981;
+    }
+
+    .toast.error {
+      background-color: #ef4444;
+    }
+
+    .toast.warning {
+      background-color: #f59e0b;
+    }
+
+    /* Logs modal styles */
+    #userLogsModal .modal-scale {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(0.95) translateY(-10px);
+      opacity: 0;
+    }
+
+    #userLogsModal .modal-scale.show {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    /* Log item animations */
+    #logsList > div {
+      transition: all 0.2s ease-in-out;
+    }
+
+    #logsList > div:hover {
+      transform: translateX(4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Logout Modal Styles */
+    #logoutConfirmationModal {
+      transition: all 0.3s ease-in-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-slideUp {
+      animation: slideUp 0.3s ease-out forwards;
+    }
+
+    .backdrop-blur-sm {
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 flex">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="bg-slate-900 w-64 min-h-screen flex flex-col shadow-lg relative">
+    <!-- Toggle Button -->
+    <div class="absolute -right-3 top-6 z-10">
+      <button id="sidebarToggle" class="bg-slate-800 text-white p-2 rounded-full shadow-md hover:bg-slate-700 transition-colors toggle-btn">
+        <i class="fas fa-chevron-left text-sm"></i>
+      </button>
+    </div>
+    
+    <!-- Logo Section -->
+    <div class="bg-slate-800 p-4 flex items-center justify-center space-x-3">
+      <i class="fas fa-wallet text-2xl text-blue-500"></i>
+      <h1 class="text-xl font-bold text-white logo-text">SmartBite</h1>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <ul class="space-y-1 px-2">
+        <li>
+          <a href="/public/index.html" class="menu-item text-gray-300 flex items-center" data-page="index.html">
+            <i class="fas fa-credit-card w-6 text-center"></i>
+            <span class="ml-3 menu-text">Register RFID</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/load_rfid.html" class="menu-item text-gray-300 flex items-center" data-page="load_rfid.html">
+            <i class="fas fa-wallet w-6 text-center"></i>
+            <span class="ml-3 menu-text">Load Card</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/return_money.html" class="menu-item text-gray-300 flex items-center" data-page="return_money.html">
+            <i class="fas fa-money-bill-wave w-6 text-center"></i>
+            <span class="ml-3 menu-text">Withdraw Money</span>
+          </a>
+        </li>
+        <li>
+          <a href="/public/products.html" class="menu-item text-gray-300 flex items-center" data-page="products.html">
+            <i class="fas fa-box w-6 text-center"></i>
+            <span class="ml-3 menu-text">Add Product</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://websocket-testing-3tpu.onrender.com/buy_products.html" class="menu-item text-gray-300 flex items-center" data-page="buy_products.html">
+            <i class="fas fa-shopping-cart w-6 text-center"></i>
+            <span class="ml-3 menu-text">Buy Product</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/sales.html" class="menu-item text-gray-300 flex items-center" data-page="sales.html">
+            <i class="fas fa-chart-line w-6 text-center"></i>
+            <span class="ml-3 menu-text">Sales</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/logs.html" class="menu-item text-gray-300 flex items-center" data-page="logs.html">
+            <i class="fas fa-clipboard-list w-6 text-center"></i>
+            <span class="ml-3 menu-text">Logs</span>
+          </a>
+        </li>
+        <li>
+          <a href="/SMARTBITE-ADMIN/add_role.html" class="menu-item text-gray-300 flex items-center active" data-page="add_role.html">
+            <i class="fas fa-user-plus w-6 text-center"></i>
+            <span class="ml-3 menu-text">Role Management</span>
+          </a>
+        </li>
+        <li>
+          <a href="../SMARTBITE-ADMIN/student_list.html" class="menu-item text-gray-300 flex items-center">
+            <i class="fas fa-users w-6 text-center"></i>
+            <span class="ml-3 menu-text">Student List</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Logout button at the bottom -->
+    <div class="p-4 border-t border-slate-700">
+      <button id="logoutBtn" class="w-full flex items-center justify-center px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition">
+        <i class="fas fa-sign-out-alt mr-2"></i>
+        <span class="menu-text">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Role Management Section -->
+  <main id="mainContent" class="flex-1 p-8 bg-gray-50 overflow-auto transition-all duration-300">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-user-shield mr-3 text-blue-500"></i>
+            Role Management
+          </h1>
+          <p class="text-gray-600 mt-2">Manage user accounts and permissions</p>
+          
+          <!-- Philippine Time Display in Header -->
+          <div class="mt-3 flex items-center gap-3 text-sm">
+            <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border">
+              <i class="fas fa-clock text-blue-500"></i>
+              <span class="font-medium text-gray-700">PH Time:</span>
+              <span id="philippineTime" class="ph-time-display font-mono"></span>
+            </div>
+            <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border">
+              <i class="fas fa-calendar text-green-500"></i>
+              <span id="philippineDate" class="text-gray-700 font-medium"></span>
+            </div>
+          </div>
+        </div>
+        <div class="flex space-x-3 mt-4 md:mt-0">
+          <button id="showUserListBtn" class="btn-primary">
+            <i class="fas fa-list"></i>
+            <span>View User List</span>
+          </button>
+          <button id="showStatsBtn" class="btn-secondary">
+            <i class="fas fa-chart-pie"></i>
+            <span>View Stats</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Stats Section -->
+      <section id="stats_section" class="mb-8 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="stats-card border-l-purple-500">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-gray-500">Total Users</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-1" id="totalUsers">0</h3>
+                <p class="text-xs text-gray-400 mt-1">As of <span id="statsTime"></span></p>
+              </div>
+              <div class="bg-purple-100 p-3 rounded-full">
+                <i class="fas fa-users text-purple-600"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stats-card border-l-green-500">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-gray-500">Cashiers</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-1" id="cashierCount">0</h3>
+                <p class="text-xs text-gray-400 mt-1">Active cashier accounts</p>
+              </div>
+              <div class="bg-green-100 p-3 rounded-full">
+                <i class="fas fa-cash-register text-green-600"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stats-card border-l-blue-500">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-gray-500">IT Staff</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-1" id="itCount">0</h3>
+                <p class="text-xs text-gray-400 mt-1">Technical support team</p>
+              </div>
+              <div class="bg-blue-100 p-3 rounded-full">
+                <i class="fas fa-laptop-code text-blue-600"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stats-card border-l-yellow-500">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-gray-500">Accountants</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-1" id="accountantCount">0</h3>
+                <p class="text-xs text-gray-400 mt-1">Financial management</p>
+              </div>
+              <div class="bg-yellow-100 p-3 rounded-full">
+                <i class="fas fa-calculator text-yellow-600"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <div class="center-form">
+        <!-- Add Role Form - Centered -->
+        <section id="add_cashier_user" class="card form-container">
+          <div class="p-8">
+            <div class="text-center mb-8">
+              <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-plus text-2xl text-white"></i>
+              </div>
+              <h2 class="text-2xl font-bold text-gray-900">Add New User</h2>
+              <p class="text-gray-500 mt-2">Create a new user account with specific role</p>
+            </div>
+
+            <form id="addCashierForm" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="relative">
+                  <label for="first_name" class="sr-only">First Name</label>
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" name="adminFname" id="first_name" placeholder="First Name" class="form-input pl-10" required>
+                  <div id="first_name_error" class="error-message"></div>
+                </div>
+                <div class="relative">
+                  <label for="middle_name" class="sr-only">Middle Name</label>
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" name="adminMname" id="middle_name" placeholder="Middle Name" class="form-input pl-10">
+                </div>
+                <div class="relative">
+                  <label for="last_name" class="sr-only">Last Name</label>
+                  <i class="fas fa-user input-icon"></i>
+                  <input type="text" name="adminLname" id="last_name" placeholder="Last Name" class="form-input pl-10" required>
+                  <div id="last_name_error" class="error-message"></div>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <label for="email" class="sr-only">Email Address</label>
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" name="adminEmail" id="email" placeholder="Email Address" class="form-input pl-10" required>
+                <div id="email_error" class="error-message"></div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="relative">
+                  <label for="password" class="sr-only">Password</label>
+                  <i class="fas fa-lock input-icon"></i>
+                  <input type="password" name="adminPassword" id="password" placeholder="Password" class="form-input pl-10" required>
+                  <div id="password_error" class="error-message"></div>
+                </div>
+                <div class="relative">
+                  <label for="confirm_password" class="sr-only">Confirm Password</label>
+                  <i class="fas fa-lock input-icon"></i>
+                  <input type="password" name="confirmPassword" id="confirm_password" placeholder="Confirm Password" class="form-input pl-10" required>
+                  <div id="confirm_password_error" class="error-message"></div>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <label for="role" class="sr-only">Role</label>
+                <i class="fas fa-user-shield input-icon"></i>
+                <select name="adminRole" id="role" class="form-input pl-10 appearance-none" required>
+                  <option value="">Select Role</option>
+                  <option value="accountant">Accountant</option>
+                  <option value="cashier">Cashier</option>
+                  <option value="it">IT</option>
+                  <option value="super admin">Super Admin</option>
+                </select>
+                <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <div id="role_error" class="error-message"></div>
+              </div>
+              
+              <button type="submit" class="btn-primary w-full flex items-center justify-center space-x-2">
+                <i class="fas fa-user-plus"></i>
+                <span>Create User Account</span>
+              </button>
+              
+              <div id="form_message" class="text-center mt-4"></div>
+            </form>
+          </div>
+        </section>
+      </div>
+
+      <!-- User List Section - Full width when shown -->
+      <section id="user_list_section" class="card hidden w-full mt-8">
+        <div class="p-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-users mr-2 text-blue-500"></i>
+                User Accounts
+              </h2>
+              <p class="text-gray-500 text-sm mt-1" id="userCountText">Showing 0 users</p>
+              <p class="text-xs text-gray-400">Last updated: <span id="listUpdateTime"></span></p>
+            </div>
+            <div class="flex space-x-2 mt-4 md:mt-0">
+              <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="userSearch" placeholder="Search users..." class="form-input pl-10">
+              </div>
+              <button id="backToFormBtn" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Form</span>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Role Filter Tabs -->
+          <div class="mb-6 border-b border-gray-200">
+            <div class="flex flex-wrap -mb-px">
+              <button class="role-filter-btn active px-4 py-2 text-sm font-medium text-center border-b-2 border-blue-500 text-blue-600" data-role="all">
+                <i class="fas fa-layer-group mr-1"></i> All Users
+              </button>
+              <button class="role-filter-btn px-4 py-2 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-role="super admin">
+                <i class="fas fa-crown mr-1"></i> Super Admin
+              </button>
+              <button class="role-filter-btn px-4 py-2 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-role="accountant">
+                <i class="fas fa-calculator mr-1"></i> Accountants
+              </button>
+              <button class="role-filter-btn px-4 py-2 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-role="cashier">
+                <i class="fas fa-cash-register mr-1"></i> Cashiers
+              </button>
+              <button class="role-filter-btn px-4 py-2 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-role="it">
+                <i class="fas fa-laptop-code mr-1"></i> IT Staff
+              </button>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
+                <!-- User data will be populated here -->
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination -->
+          <div id="pagination" class="flex flex-col md:flex-row items-center justify-between mt-6 space-y-4 md:space-y-0">
+            <div class="text-sm text-gray-700">
+              Showing <span id="paginationStart">0</span> to <span id="paginationEnd">0</span> of <span id="paginationTotal">0</span> users
+            </div>
+            <div class="flex space-x-1">
+              <button id="prevPage" class="pagination-btn">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <div id="pageNumbers" class="flex space-x-1">
+                <!-- Page numbers will be generated here -->
+              </div>
+              <button id="nextPage" class="pagination-btn">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div id="noUsersMessage" class="text-center py-12 hidden">
+            <i class="fas fa-users text-5xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+            <p class="text-gray-500 max-w-md mx-auto">Get started by creating your first user account using the form.</p>
+            <button id="createFirstUserBtn" class="btn-primary mt-4">
+              <i class="fas fa-user-plus mr-2"></i>
+              Create First User
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Enhanced Edit User Modal -->
+  <div id="editUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 modal-scale">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-user-edit text-blue-500 mr-2"></i>
+            Edit User Account
+          </h3>
+          <button id="closeEditModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <!-- User Summary -->
+        <div id="editUserSummary" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 hidden">
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <span id="editUserInitials" class="text-white font-medium text-sm"></span>
+            </div>
+            <div>
+              <h4 id="editUserName" class="font-semibold text-gray-900"></h4>
+              <p id="editUserCurrentRole" class="text-sm text-gray-600"></p>
+            </div>
+          </div>
+        </div>
+        
+        <form id="editUserForm" class="space-y-4">
+          <input type="hidden" id="edit_user_id">
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="relative">
+              <label for="edit_first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+              <input type="text" id="edit_first_name" class="form-input" required>
+              <div id="edit_first_name_error" class="error-message"></div>
+            </div>
+            <div class="relative">
+              <label for="edit_last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+              <input type="text" id="edit_last_name" class="form-input" required>
+              <div id="edit_last_name_error" class="error-message"></div>
+            </div>
+          </div>
+
+          <div class="relative">
+            <label for="edit_middle_name" class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+            <input type="text" id="edit_middle_name" class="form-input">
+          </div>
+          
+          <div class="relative">
+            <label for="edit_email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+            <input type="email" id="edit_email" class="form-input" required>
+            <div id="edit_email_error" class="error-message"></div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="relative">
+              <label for="edit_role" class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+              <select id="edit_role" class="form-input" required>
+                <option value="">Select Role</option>
+                <option value="accountant">Accountant</option>
+                <option value="cashier">Cashier</option>
+                <option value="it">IT Staff</option>
+                <option value="super admin">Super Admin</option>
+              </select>
+              <div id="edit_role_error" class="error-message"></div>
+            </div>
+            <div class="relative">
+              <label for="edit_status" class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+              <select id="edit_status" class="form-input" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Password Reset Section -->
+          <div class="border-t pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <label class="block text-sm font-medium text-gray-700">Password Reset</label>
+              <button type="button" id="togglePasswordReset" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-key mr-1"></i>Reset Password
+              </button>
+            </div>
+            
+            <div id="passwordResetSection" class="hidden space-y-3 bg-gray-50 p-4 rounded-lg">
+              <div class="relative">
+                <label for="edit_password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input type="password" id="edit_password" class="form-input" placeholder="Leave blank to keep current">
+                <div id="edit_password_error" class="error-message"></div>
+              </div>
+              <div class="relative">
+                <label for="edit_confirm_password" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <input type="password" id="edit_confirm_password" class="form-input" placeholder="Confirm new password">
+                <div id="edit_confirm_password_error" class="error-message"></div>
+              </div>
+              <div class="text-xs text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>Password must be at least 6 characters long
+              </div>
+            </div>
+          </div>
+
+          <!-- User Metadata -->
+          <div class="text-xs text-gray-500 border-t pt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <span class="font-medium">Created:</span> 
+              <span id="editUserCreatedAt"></span>
+            </div>
+            <div>
+              <span class="font-medium">Last Modified:</span> 
+              <span id="editUserTimestamp"></span>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="flex justify-between items-center pt-4">
+            <div>
+              <button type="button" id="viewUserLogs" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                <i class="fas fa-history mr-1"></i>View Activity Logs
+              </button>
+            </div>
+            <div class="flex space-x-3">
+              <button type="button" id="cancelEdit" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-save mr-2"></i>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div id="logoutConfirmationModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 px-4 backdrop-blur-sm">
+    <div class="p-8 bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slideUp">
+      <div class="flex items-start justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Confirm Logout</h2>
+        <button id="closeLogoutModalBtn" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fas fa-times fa-lg"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-6">
+        <div class="flex items-center justify-center">
+          <div class="bg-red-50 p-4 rounded-full">
+            <i class="fas fa-sign-out-alt text-red-500 text-4xl"></i>
+          </div>
+        </div>
+        
+        <div class="text-center">
+          <p class="text-lg text-gray-700 font-medium">Are you sure you want to logout?</p>
+          <p class="text-sm text-gray-500 mt-2">You will need to log in again to access the system.</p>
+        </div>
+        
+        <div class="flex justify-center gap-4 pt-2">
+          <button id="cancelLogoutBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button id="confirmLogoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      const menuItems = document.querySelectorAll('.menu-item');
+      
+      // Set active menu item based on current page
+      const currentPage = window.location.pathname.split('/').pop();
+      menuItems.forEach(item => {
+        if (item.getAttribute('data-page') === currentPage) {
+          item.classList.add('active');
+        }
+      });
+      
+      // Toggle sidebar
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('sidebar-collapsed');
+        mainContent.classList.toggle('main-expanded');
+        
+        // Change toggle button icon
+        const icon = toggleBtn.querySelector('i');
+        if (sidebar.classList.contains('sidebar-collapsed')) {
+          icon.classList.remove('fa-chevron-left');
+          icon.classList.add('fa-chevron-right');
+        } else {
+          icon.classList.remove('fa-chevron-right');
+          icon.classList.add('fa-chevron-left');
+        }
+      });
+      
+      // Logout functionality with modal
+      const logoutBtn = document.getElementById('logoutBtn');
+      const logoutModal = document.getElementById('logoutConfirmationModal');
+      const closeLogoutModalBtn = document.getElementById('closeLogoutModalBtn');
+      const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+      const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+      
+      // Show logout modal
+      logoutBtn.addEventListener('click', function() {
+        logoutModal.classList.remove('hidden');
+      });
+      
+      // Close logout modal
+      function closeLogoutModal() {
+        logoutModal.classList.add('hidden');
+      }
+      
+      closeLogoutModalBtn.addEventListener('click', closeLogoutModal);
+      cancelLogoutBtn.addEventListener('click', closeLogoutModal);
+      
+      // Confirm logout
+      confirmLogoutBtn.addEventListener('click', function() {
+        localStorage.removeItem('cashierUser');
+        window.location.href = '/login.html';
+      });
+      
+      // Close modal when clicking outside
+      logoutModal.addEventListener('click', function(e) {
+        if (e.target === logoutModal) {
+          closeLogoutModal();
+        }
+      });
+    });
+
+    // Philippine Time and Date Display
+    function updatePhilippineTime() {
+      const now = new Date();
+      
+      // Create Philippine time (UTC+8)
+      const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+      
+      // Format time (12-hour format with AM/PM)
+      const timeString = phTime.toLocaleTimeString('en-PH', { 
+        hour12: true,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'UTC'
+      });
+      
+      // Format date
+      const dateOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'UTC'
+      };
+
+      const shortDateOptions = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        timeZone: 'UTC'
+      };
+      
+      const dateString = phTime.toLocaleDateString('en-PH', dateOptions);
+      const shortDateString = phTime.toLocaleDateString('en-PH', shortDateOptions);
+      
+      // Update all time displays
+      document.getElementById('philippineTime').textContent = timeString;
+      document.getElementById('philippineDate').textContent = shortDateString;
+      document.getElementById('statsTime').textContent = timeString;
+      document.getElementById('listUpdateTime').textContent = `${timeString} - ${shortDateString}`;
+    }
+
+    // Update time every second
+    setInterval(updatePhilippineTime, 1000);
+    updatePhilippineTime(); // Initial call
+
+    // Format timestamp for user creation dates
+    function formatUserTimestamp(timestamp) {
+      if (!timestamp) return 'N/A';
+      
+      const date = new Date(timestamp);
+      const phTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+      
+      const now = new Date();
+      const nowPhTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+      const diffMs = nowPhTime - phTime;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        return 'Today';
+      } else if (diffDays === 1) {
+        return 'Yesterday';
+      } else if (diffDays < 7) {
+        return `${diffDays} days ago`;
+      } else {
+        return phTime.toLocaleDateString('en-PH', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    }
+
+    // Make function available globally for use in add_role.js
+    window.formatUserTimestamp = formatUserTimestamp;
+    window.updatePhilippineTime = updatePhilippineTime;
+  </script>
+</body>
+</html>

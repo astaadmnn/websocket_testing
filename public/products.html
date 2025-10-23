@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Management | SmartBite</title>
+  
+  <!-- Icons & Styles -->
+  <script src="https://kit.fontawesome.com/6dc93004d4.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link rel="stylesheet" href="../css/buy_products.css"/>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
+  <script type="module" src="../script/firebase_conn.js"></script>
+  <script type="module" src="../data_insertion/product_crud.js" defer></script>
+  <script type="module" src="../script/role_access.js"></script>
+  
+  <style>
+    /* Enhanced animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .animate-slideIn {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    /* Smooth hover animations for table rows */
+    tbody tr {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    tbody tr:hover {
+      background-color: #f8fafc;
+      transform: translateX(4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Modal animations */
+    .modal-scale {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    .modal-scale.show {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* Enhanced button effects */
+    .btn-gradient {
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+    .btn-gradient::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    .btn-gradient:hover::before {
+      left: 100%;
+    }
+
+    /* Image preview container */
+    .image-preview-container {
+      position: relative;
+      display: inline-block;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 12px;
+      background: #f8fafc;
+      transition: all 0.3s ease;
+    }
+    
+    .image-preview-container:hover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .image-preview-container.has-image {
+      border-style: solid;
+      border-color: #3b82f6;
+      background: white;
+    }
+
+    .preview-image {
+      max-width: 200px;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .remove-preview-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .remove-preview-btn:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+
+    .upload-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      color: #64748b;
+    }
+
+    .upload-placeholder i {
+      font-size: 48px;
+      margin-bottom: 12px;
+      color: #94a3b8;
+    }
+
+    /* Enhanced sidebar */
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      gap: 12px;
+    }
+    
+    .menu-item:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+      transform: translateX(4px);
+    }
+
+    .menu-item.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+    }
+
+    /* Card enhancements */
+    .card-enhanced {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e5e7eb;
+      transition: all 0.3s ease;
+    }
+
+    .card-enhanced:hover {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+
+    /* Input focus effects */
+    input:focus, select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Table enhancements */
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      color: #475569;
+      padding: 16px;
+    }
+
+    tbody td {
+      padding: 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* Action button styles */
+    .action-btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      font-size: 0.875rem;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Badge styles */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Philippine Time Display */
+    .ph-time-display {
+      background: linear-gradient(135deg, #0055A4 0%, #BF0A30 50%, #FFFFFF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+
+    .time-date-container {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 1rem;
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Sidebar transition - EXACT COPY FROM YOUR ORIGINAL CODE */
+    #sidebar {
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-collapsed {
+      width: 70px !important;
+    }
+
+    .sidebar-collapsed .menu-text,
+    .sidebar-collapsed .logo-text {
+      display: none;
+    }
+
+    .sidebar-collapsed .menu-item {
+      justify-content: center;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .toggle-btn {
+      transform: rotate(180deg);
+    }
+
+    .main-expanded {
+      margin-left: 70px;
+    }
+
+    .menu-item {
+      transition: all 0.2s ease;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+      transform: translateX(2px);
+    }
+
+    .menu-item.active {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+
+    /* Tooltip for collapsed sidebar */
+    .tooltip {
+      position: relative;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      margin-left: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* FIXED: Modal scrollbar styles */
+    .modal-container {
+      max-height: 90vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+
+    .modal-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .modal-container::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+
+    .modal-container::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    .modal-container::-webkit-scrollbar-thumb:hover {
+      background-color: #94a3b8;
+    }
+
+    /* Ensure modal content can scroll */
+    .modal-content {
+      max-height: inherit;
+      overflow-y: inherit;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 flex min-h-screen font-inter">
+
+<!-- Sidebar - EXACT COPY FROM YOUR ORIGINAL CODE -->
+<aside id="sidebar" class="bg-slate-900 w-64 min-h-screen flex flex-col shadow-lg relative">
+  <!-- Toggle Button -->
+  <div class="absolute -right-3 top-6 z-10">
+    <button id="sidebarToggle" class="bg-slate-800 text-white p-2 rounded-full shadow-md hover:bg-slate-700 transition-colors toggle-btn">
+      <i class="fas fa-chevron-left text-sm"></i>
+    </button>
+  </div>
+  
+  <!-- Logo Section -->
+  <div class="bg-slate-800 p-4 flex items-center justify-center space-x-3">
+    <i class="fas fa-wallet text-2xl text-blue-500"></i>
+    <h1 class="text-xl font-bold text-white logo-text">SmartBite</h1>
+  </div>
+
+  <!-- Navigation Menu - NO SCROLL -->
+  <nav class="flex-1 py-4">
+    <ul class="space-y-1 px-2">
+      <li>
+        <a href="/public/index.html" class="menu-item text-gray-300 flex items-center" data-page="index.html">
+          <i class="fas fa-credit-card w-6 text-center"></i>
+          <span class="ml-3 menu-text">Register RFID</span>
+        </a>
+      </li>
+      <li>
+        <a href="/SMARTBITE-ADMIN/load_rfid.html" class="menu-item text-gray-300 flex items-center" data-page="load_rfid.html">
+          <i class="fas fa-wallet w-6 text-center"></i>
+          <span class="ml-3 menu-text">Load Card</span>
+        </a>
+      </li>
+      <li>
+        <a href="/SMARTBITE-ADMIN/return_money.html" class="menu-item text-gray-300 flex items-center" data-page="return_money.html">
+          <i class="fas fa-money-bill-wave w-6 text-center"></i>
+          <span class="ml-3 menu-text">Withdraw Money</span>
+        </a>
+      </li>
+      <li>
+        <a href="/public/products.html" class="menu-item text-gray-300 flex items-center active" data-page="products.html">
+          <i class="fas fa-box w-6 text-center"></i>
+          <span class="ml-3 menu-text">Add Product</span>
+        </a>
+      </li>
+      <li>
+        <a href="https://websocket-testing-3tpu.onrender.com/buy_products.html" class="menu-item text-gray-300 flex items-center" data-page="buy_products.html">
+          <i class="fas fa-shopping-cart w-6 text-center"></i>
+          <span class="ml-3 menu-text">Buy Product</span>
+        </a>
+      </li>
+      <li>
+        <a href="../SMARTBITE-ADMIN/sales.html" class="menu-item text-gray-300 flex items-center" data-page="sales.html">
+          <i class="fas fa-chart-line w-6 text-center"></i>
+          <span class="ml-3 menu-text">Sales</span>
+        </a>
+      </li>
+      <li>
+        <a href="../SMARTBITE-ADMIN/logs.html" class="menu-item text-gray-300 flex items-center" data-page="logs.html">
+          <i class="fas fa-clipboard-list w-6 text-center"></i>
+          <span class="ml-3 menu-text">Logs</span>
+        </a>
+      </li>
+      <li>
+        <a href="/SMARTBITE-ADMIN/add_role.html" class="menu-item text-gray-300 flex items-center" data-page="add_role.html">
+          <i class="fas fa-user-plus w-6 text-center"></i>
+          <span class="ml-3 menu-text">Role Management</span>
+        </a>
+      </li>
+      <li>
+        <a href="../SMARTBITE-ADMIN/student_list.html" class="menu-item text-gray-300 flex items-center">
+          <i class="fas fa-users w-6 text-center"></i>
+          <span class="ml-3 menu-text">Student List</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Logout button at the bottom -->
+  <div class="p-4 border-t border-slate-700">
+    <button id="logoutBtn" class="w-full flex items-center justify-center px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition">
+      <i class="fas fa-sign-out-alt mr-2"></i>
+      <span class="menu-text">Logout</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<section id="mainContent" class="flex-1 flex flex-col transition-all duration-300">
+  <div class="container mx-auto px-4 py-8 flex-1 overflow-auto">
+    
+    <!-- Header -->
+    <div class="mb-8 animate-fadeIn">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-bold text-slate-900 flex items-center gap-3">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-boxes text-white text-xl"></i>
+            </div>
+            Product Management
+          </h2>
+          <p class="text-gray-600 mt-2 ml-15">MPHS Cafeteria Inventory System</p>
+          
+          <!-- Philippine Time Display -->
+          <div class="mt-3 ml-15 flex flex-wrap items-center gap-3 text-sm">
+            <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border">
+              <i class="fas fa-clock text-blue-500"></i>
+              <span class="font-medium text-gray-700">PH Time:</span>
+              <span id="philippineTime" class="ph-time-display font-mono"></span>
+            </div>
+            <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border">
+              <i class="fas fa-calendar text-green-500"></i>
+              <span id="philippineDate" class="text-gray-700 font-medium"></span>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="showAddProductBtn" class="btn-gradient px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 font-medium">
+            <i class="fas fa-plus mr-2"></i> Add Product
+          </button>
+          <button id="showManageProductBtn" class="px-5 py-2.5 bg-white text-slate-700 rounded-lg hover:bg-gray-50 transition-all shadow font-medium border border-gray-200">
+            <i class="fas fa-list mr-2"></i> Manage Products
+          </button>
+          <button id="showArchivedProductBtn" class="px-5 py-2.5 bg-white text-slate-700 rounded-lg hover:bg-gray-50 transition-all shadow font-medium border border-gray-200">
+            <i class="fas fa-archive mr-2"></i> Archived Products
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+  <div id="logoutConfirmationModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 px-4 backdrop-blur-sm">
+    <div class="p-8 bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slideUp">
+      <div class="flex items-start justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Confirm Logout</h2>
+        <button id="closeLogoutModalBtn" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fas fa-times fa-lg"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-6">
+        <div class="flex items-center justify-center">
+          <div class="bg-red-50 p-4 rounded-full">
+            <i class="fas fa-sign-out-alt text-red-500 text-4xl"></i>
+          </div>
+        </div>
+        
+        <div class="text-center">
+          <p class="text-lg text-gray-700 font-medium">Are you sure you want to logout?</p>
+          <p class="text-sm text-gray-500 mt-2">You will need to log in again to access the system.</p>
+        </div>
+        
+        <div class="flex justify-center gap-4 pt-2">
+          <button id="cancelLogoutBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button id="confirmLogoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <!-- Add Products Section -->
+    <section id="add_products" class="mb-8 animate-fadeIn">
+      <div class="card-enhanced p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold flex items-center gap-2 text-slate-900">
+            <i class="fas fa-plus-circle text-green-500"></i> Add New Product
+          </h3>
+          <div class="text-sm text-gray-500">
+            Last updated: <span id="addSectionUpdateTime"></span>
+          </div>
+        </div>
+        <form id="addProductForm" class="space-y-6">
+          <div class="grid md:grid-cols-2 gap-6">
+            <div>
+              <label for="product_name" class="block text-sm font-semibold text-gray-700 mb-2">Product Name</label>
+              <input id="product_name" type="text" placeholder="e.g. Coke" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required/>
+            </div>
+            <div>
+              <label for="product_price" class="block text-sm font-semibold text-gray-700 mb-2">Price (₱)</label>
+              <input id="product_price" type="number" step="0.01" placeholder="0.00" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required/>
+            </div>
+            <div>
+              <label for="product_category" class="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+              <select id="product_category" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required>
+                <option value="">Select Category</option>
+                <option value="Snacks">🍿 Snacks</option>
+                <option value="Drinks">🥤 Drinks</option>
+                <option value="Meals">🍱 Meals</option>
+              </select>
+            </div>
+            <div>
+              <label for="product_quantity" class="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
+              <input id="product_quantity" type="number" min="1" value="1" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required/>
+            </div>
+          </div>
+          
+          <div>
+            <label for="product_image" class="block text-sm font-semibold text-gray-700 mb-3">Product Image</label>
+            <div class="image-preview-container" id="addImagePreviewContainer">
+              <div class="upload-placeholder" id="addUploadPlaceholder">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p class="font-medium">Click to upload image</p>
+                <p class="text-xs mt-1">PNG or JPG (Max 5MB)</p>
+              </div>
+              <img id="addImagePreview" src="" alt="Preview" class="preview-image hidden"/>
+              <button type="button" class="remove-preview-btn hidden" id="addRemovePreview">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <input id="product_image" type="file" accept="image/png, image/jpeg, image/jpg" class="hidden"/>
+          </div>
+          
+          <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all font-semibold text-lg">
+            <i class="fas fa-save mr-2"></i> Save Product
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Manage Products Section -->
+    <section id="manage_products" class="hidden animate-fadeIn">
+      <div class="card-enhanced p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold flex items-center gap-2 text-slate-900">
+            <i class="fas fa-list-alt text-yellow-500"></i> Manage Products
+          </h3>
+          <div class="text-sm text-gray-500">
+            Last updated: <span id="manageSectionUpdateTime"></span>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-lg border border-gray-200">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="text-left">Image</th>
+                <th class="text-left">Name</th>
+                <th class="text-left">Category</th>
+                <th class="text-left">Quantity</th>
+                <th class="text-left">Price</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products_table"></tbody>
+          </table>
+        </div>
+        <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div id="paginationInfo" class="text-sm text-gray-600 font-medium">Showing 0-0 of 0 products</div>
+          <div id="paginationControls" class="flex gap-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Archived Products Section -->
+    <section id="archived_products" class="hidden animate-fadeIn">
+      <div class="card-enhanced p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold flex items-center gap-2 text-slate-900">
+            <i class="fas fa-archive text-red-500"></i> Archived Products
+          </h3>
+          <div class="text-sm text-gray-500">
+            Last updated: <span id="archivedSectionUpdateTime"></span>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-lg border border-gray-200">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="text-left">Image</th>
+                <th class="text-left">Name</th>
+                <th class="text-left">Category</th>
+                <th class="text-left">Quantity</th>
+                <th class="text-left">Price</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="archived_table"></tbody>
+          </table>
+        </div>
+        <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div id="archived_paginationInfo" class="text-sm text-gray-600 font-medium">Showing 0-0 of 0 products</div>
+          <div id="archived_paginationControls" class="flex gap-1"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</section>
+
+<!-- Edit Product Modal - FIXED SCROLLBAR ISSUE -->
+<div id="editProductModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="modal-scale bg-white rounded-2xl shadow-2xl w-full max-w-md relative modal-container">
+    <button type="button" id="closeEditModal" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors z-10">
+      <i class="fas fa-times text-xl"></i>
+    </button>
+    <div class="p-8 modal-content">
+      <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+        <i class="fas fa-edit text-blue-500"></i> Edit Product
+      </h2>
+      <form id="editProductForm" class="space-y-4">
+        <div>
+          <label for="edit_product_name" class="block text-sm font-semibold text-gray-700 mb-2">Product Name</label>
+          <input id="edit_product_name" type="text" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required/>
+        </div>
+        <div>
+          <label for="edit_product_price" class="block text-sm font-semibold text-gray-700 mb-2">Price (₱)</label>
+          <input id="edit_product_price" type="number" step="0.01" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required/>
+        </div>
+        <div>
+          <label for="edit_product_category" class="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+          <select id="edit_product_category" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required>
+            <option value="">Select Category</option>
+            <option value="Snacks">🍿 Snacks</option>
+            <option value="Drinks">🥤 Drinks</option>
+            <option value="Meals">🍱 Meals</option>
+          </select>
+        </div>
+        <div>
+          <label for="edit_product_quantity" class="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
+          <input id="edit_product_quantity" type="number" min="1" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required/>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-3">Product Image</label>
+          <div class="image-preview-container" id="editImagePreviewContainer">
+            <img id="edit_product_image_preview" src="" alt="Preview" class="preview-image"/>
+            <button type="button" class="remove-preview-btn" id="editRemovePreview">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <input id="edit_product_image" type="file" accept="image/png, image/jpeg, image/jpg" class="hidden"/>
+          <button type="button" id="editChangeImageBtn" class="mt-3 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium">
+            <i class="fas fa-camera mr-2"></i> Change Image
+          </button>
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" id="cancelEditModal" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium">
+            <i class="fas fa-times mr-2"></i> Cancel
+          </button>
+          <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-medium shadow-lg">
+            <i class="fas fa-check mr-2"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Additional Modals (Archive, Restore, Delete, Success, Error) -->
+<div id="archiveProductModal" class="hidden fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4">
+  <div class="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+      <i class="fas fa-archive text-yellow-500"></i> Archive Product
+    </h2>
+    <p class="text-gray-600 mb-6">Are you sure you want to archive <span id="archiveProductName" class="font-semibold text-gray-900"></span>?</p>
+    <div class="flex justify-end gap-3">
+      <button id="cancelArchiveModal" class="px-5 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-all font-medium">Cancel</button>
+      <button id="confirmArchiveProduct" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-yellow-500 to-yellow-600 text-white hover:from-yellow-600 hover:to-yellow-700 transition-all font-medium shadow-lg">Archive</button>
+    </div>
+  </div>
+</div>
+
+<div id="restoreProductModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+      <i class="fas fa-undo text-green-500"></i> Restore Product
+    </h2>
+    <p class="text-gray-600 mb-6">Do you want to restore <span id="restoreProductName" class="font-semibold text-gray-900"></span>?</p>
+    <div class="flex justify-end gap-3">
+      <button id="cancelRestoreModal" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium">Cancel</button>
+      <button id="confirmRestoreProduct" class="px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-medium shadow-lg">Restore</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteProductModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+      <i class="fas fa-trash text-red-500"></i> Delete Product
+    </h2>
+    <p class="text-gray-600 mb-6">Are you sure you want to permanently delete <span id="deleteProductName" class="font-semibold text-gray-900"></span>?</p>
+    <div class="flex justify-end gap-3">
+      <button id="cancelDeleteModal" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium">Cancel</button>
+      <button id="confirmDeleteProduct" class="px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-lg">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Processing Modals -->
+<div id="processingAddModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Adding Product</h3>
+    <p class="text-gray-600">Please wait while we add your product...</p>
+  </div>
+</div>
+
+<div id="processingEditModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Updating Product</h3>
+    <p class="text-gray-600">Please wait while we update your product...</p>
+  </div>
+</div>
+
+<div id="processingArchiveModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-spinner fa-spin text-yellow-500 text-2xl"></i>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Archiving Product</h3>
+    <p class="text-gray-600">Please wait while we archive your product...</p>
+  </div>
+</div>
+
+<div id="processingRestoreModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-spinner fa-spin text-green-500 text-2xl"></i>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Restoring Product</h3>
+    <p class="text-gray-600">Please wait while we restore your product...</p>
+  </div>
+</div>
+
+<div id="processingDeleteModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Deleting Product</h3>
+    <p class="text-gray-600">Please wait while we delete your product...</p>
+  </div>
+</div>
+
+<div id="successModal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-check text-green-500 text-2xl"></i>
+    </div>
+    <p class="font-semibold text-lg mb-6 text-gray-900"></p>
+    <button id="closeSuccessModal" class="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-medium shadow-lg">OK</button>
+  </div>
+</div>
+
+<div id="fileErrorModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+    </div>
+    <h2 class="text-xl font-bold mb-2 text-red-600">Invalid File</h2>
+    <p class="mb-6 text-gray-600" id="fileErrorMessage">Only JPG and PNG images are allowed.</p>
+    <button id="fileErrorOkBtn" class="px-6 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-lg">OK</button>
+  </div>
+</div>
+
+<script>
+// Accurate Philippine Time and Date Display
+function updatePhilippineTime() {
+  const now = new Date();
+  
+  // Use proper timezone for Philippines (Asia/Manila)
+  const timeOptions = { 
+    timeZone: 'Asia/Manila',
+    hour12: true,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  };
+  
+  const dateOptions = {
+    timeZone: 'Asia/Manila',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  };
+
+  const shortDateOptions = {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  };
+  
+  try {
+    const timeString = now.toLocaleTimeString('en-PH', timeOptions);
+    const dateString = now.toLocaleDateString('en-PH', dateOptions);
+    const shortDateString = now.toLocaleDateString('en-PH', shortDateOptions);
+    
+    // Update all time displays
+    const timeElement = document.getElementById('philippineTime');
+    const dateElement = document.getElementById('philippineDate');
+    
+    if (timeElement) timeElement.textContent = timeString;
+    if (dateElement) dateElement.textContent = shortDateString;
+    
+    // Update section timestamps
+    document.getElementById('addSectionUpdateTime').textContent = timeString;
+    document.getElementById('manageSectionUpdateTime').textContent = timeString;
+    document.getElementById('archivedSectionUpdateTime').textContent = timeString;
+  } catch (error) {
+    console.error('Error updating Philippine time:', error);
+    // Fallback to local time if timezone is not supported
+    const fallbackTime = now.toLocaleTimeString('en-PH', { 
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    const fallbackDate = now.toLocaleDateString('en-PH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+    
+    document.getElementById('philippineTime').textContent = fallbackTime + ' (Local)';
+    document.getElementById('philippineDate').textContent = fallbackDate;
+  }
+}
+
+// Update time every second
+setInterval(updatePhilippineTime, 1000);
+updatePhilippineTime(); // Initial call
+
+// Sidebar Toggle Functionality - EXACT COPY FROM YOUR ORIGINAL CODE
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  const toggleBtn = document.getElementById('sidebarToggle');
+  const menuItems = document.querySelectorAll('.menu-item');
+  
+  // Set active menu item based on current page
+  const currentPage = window.location.pathname.split('/').pop();
+  menuItems.forEach(item => {
+    if (item.getAttribute('data-page') === currentPage) {
+      item.classList.add('active');
+    }
+  });
+  
+  // Toggle sidebar - EXACT COPY FROM YOUR ORIGINAL CODE
+  toggleBtn.addEventListener('click', function() {
+    sidebar.classList.toggle('sidebar-collapsed');
+    mainContent.classList.toggle('main-expanded');
+    
+    // Change toggle button icon
+    const icon = toggleBtn.querySelector('i');
+    if (sidebar.classList.contains('sidebar-collapsed')) {
+      icon.classList.remove('fa-chevron-left');
+      icon.classList.add('fa-chevron-right');
+    } else {
+      icon.classList.remove('fa-chevron-right');
+      icon.classList.add('fa-chevron-left');
+    }
+  });
+  
+  // Logout functionality
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    if (confirm('Are you sure you want to logout?')) {
+      localStorage.removeItem('cashierUser');
+      window.location.href = '../index.html';
+    }
+  });
+});
+
+// Section Toggle Functionality
+const showAddBtn = document.getElementById('showAddProductBtn');
+const showManageBtn = document.getElementById('showManageProductBtn');
+const showArchivedBtn = document.getElementById('showArchivedProductBtn');
+
+const addSection = document.getElementById('add_products');
+const manageSection = document.getElementById('manage_products');
+const archivedSection = document.getElementById('archived_products');
+
+showAddBtn.addEventListener('click', () => {
+  addSection.classList.remove('hidden');
+  manageSection.classList.add('hidden');
+  archivedSection.classList.add('hidden');
+  
+  showAddBtn.classList.remove('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showAddBtn.classList.add('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+  
+  showManageBtn.classList.add('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showManageBtn.classList.remove('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+  
+  showArchivedBtn.classList.add('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showArchivedBtn.classList.remove('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+});
+
+showManageBtn.addEventListener('click', () => {
+  addSection.classList.add('hidden');
+  manageSection.classList.remove('hidden');
+  archivedSection.classList.add('hidden');
+  
+  showManageBtn.classList.remove('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showManageBtn.classList.add('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+  
+  showAddBtn.classList.add('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showAddBtn.classList.remove('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+  
+  showArchivedBtn.classList.add('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showArchivedBtn.classList.remove('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+});
+
+showArchivedBtn.addEventListener('click', () => {
+  addSection.classList.add('hidden');
+  manageSection.classList.add('hidden');
+  archivedSection.classList.remove('hidden');
+  
+  showArchivedBtn.classList.remove('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showArchivedBtn.classList.add('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+  
+  showAddBtn.classList.add('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showAddBtn.classList.remove('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+  
+  showManageBtn.classList.add('bg-white', 'text-slate-700', 'border', 'border-gray-200');
+  showManageBtn.classList.remove('btn-gradient', 'bg-gradient-to-r', 'from-blue-500', 'to-blue-600', 'text-white');
+});
+
+// Modal functionality
+const editModal = document.getElementById('editProductModal');
+const closeEditModalBtn = document.getElementById('closeEditModal');
+const cancelEditModalBtn = document.getElementById('cancelEditModal');
+
+closeEditModalBtn.addEventListener('click', () => {
+  editModal.classList.add('hidden');
+});
+
+cancelEditModalBtn.addEventListener('click', () => {
+  editModal.classList.add('hidden');
+});
+
+// Close modals when clicking outside
+[editModal].forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
+});
+
+// Add modal show animation
+const showModal = (modal) => {
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    modal.querySelector('.modal-scale').classList.add('show');
+  }, 10);
+};
+
+// Processing modal functions
+function showProcessingModal(action) {
+  const modalId = `processing${action.charAt(0).toUpperCase() + action.slice(1)}Modal`;
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function hideProcessingModal(action) {
+  const modalId = `processing${action.charAt(0).toUpperCase() + action.slice(1)}Modal`;
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+// Test function to simulate opening the edit modal with content
+function testEditModal() {
+  const editModal = document.getElementById('editProductModal');
+  showModal(editModal);
+}
+</script>
+
+</body>
+</html>

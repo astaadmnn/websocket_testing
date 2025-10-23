@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Logs - SmartBite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
+  <script src="../script/firebase_conn.js"></script>
+  <script type="module" src="../script/role_access.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <style>
+    .selected {
+      border-right-style: solid;
+      border-right-width: 6px;
+      border-right-color: #2563eb;
+    }
+
+    .log-row {
+      transition: all 0.3s ease;
+    }
+
+    .log-row:hover {
+      background: #f0f9ff !important;
+      transform: translateX(4px);
+    }
+
+    .pagination-btn {
+      transition: all 0.2s ease;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .filter-badge {
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .log-icon {
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .stats-card {
+      transition: all 0.3s ease;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-input:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .logs-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .logs-container::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+
+    .logs-container::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+
+    .logs-container::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    .modal-enter {
+      animation: modalEnter 0.3s ease;
+    }
+
+    @keyframes modalEnter {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Philippine Time Display */
+    .ph-time-display {
+      background: linear-gradient(135deg, #0055A4 0%, #BF0A30 50%, #FFFFFF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+
+    /* Sidebar transition */
+    #sidebar {
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-collapsed {
+      width: 70px !important;
+    }
+
+    .sidebar-collapsed .menu-text,
+    .sidebar-collapsed .logo-text {
+      display: none;
+    }
+
+    .sidebar-collapsed .menu-item {
+      justify-content: center;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .sidebar-collapsed .toggle-btn {
+      transform: rotate(180deg);
+    }
+
+    .main-expanded {
+      margin-left: 70px;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      transition: all 0.2s ease;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      color: #d1d5db;
+      text-decoration: none;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+      transform: translateX(2px);
+    }
+
+    .menu-item.active {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 flex min-h-screen">
+
+<!-- Sidebar -->
+<aside id="sidebar" class="bg-slate-900 w-64 min-h-screen flex flex-col shadow-lg relative">
+  <!-- Toggle Button -->
+  <div class="absolute -right-3 top-6 z-10">
+    <button id="sidebarToggle" class="bg-slate-800 text-white p-2 rounded-full shadow-md hover:bg-slate-700 transition-colors toggle-btn">
+      <i class="fas fa-chevron-left text-sm"></i>
+    </button>
+  </div>
+  
+  <!-- Logo Section -->
+  <div class="bg-slate-800 p-4 flex items-center justify-center space-x-3">
+    <i class="fas fa-wallet text-2xl text-blue-500"></i>
+    <h1 class="text-xl font-bold text-white logo-text">SmartBite</h1>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="flex-1 py-4 overflow-y-auto">
+    <ul class="space-y-1 px-2">
+      <li>
+        <a href="/public/index.html" class="menu-item text-gray-300 flex items-center" data-page="index.html">
+          <i class="fas fa-credit-card w-6 text-center"></i>
+          <span class="ml-3 menu-text">Register RFID</span>
+        </a>
+      </li>
+      <li>
+        <a href="/SMARTBITE-ADMIN/load_rfid.html" class="menu-item text-gray-300 flex items-center" data-page="load_rfid.html">
+          <i class="fas fa-wallet w-6 text-center"></i>
+          <span class="ml-3 menu-text">Load Card</span>
+        </a>
+      </li>
+      <li>
+        <a href="/SMARTBITE-ADMIN/return_money.html" class="menu-item text-gray-300 flex items-center" data-page="return_money.html">
+          <i class="fas fa-money-bill-wave w-6 text-center"></i>
+          <span class="ml-3 menu-text">Withdraw Money</span>
+        </a>
+      </li>
+      <li>
+        <a href="/public/products.html" class="menu-item text-gray-300 flex items-center" data-page="products.html">
+          <i class="fas fa-box w-6 text-center"></i>
+          <span class="ml-3 menu-text">Add Product</span>
+        </a>
+      </li>
+      <li>
+        <a href="https://websocket-testing-3tpu.onrender.com/buy_products.html" class="menu-item text-gray-300 flex items-center" data-page="buy_products.html">
+          <i class="fas fa-shopping-cart w-6 text-center"></i>
+          <span class="ml-3 menu-text">Buy Product</span>
+        </a>
+      </li>
+      <li>
+        <a href="../SMARTBITE-ADMIN/sales.html" class="menu-item text-gray-300 flex items-center" data-page="sales.html">
+          <i class="fas fa-chart-line w-6 text-center"></i>
+          <span class="ml-3 menu-text">Sales</span>
+        </a>
+      </li>
+      <li>
+        <a href="../SMARTBITE-ADMIN/logs.html" class="menu-item text-gray-300 flex items-center active" data-page="logs.html">
+          <i class="fas fa-clipboard-list w-6 text-center"></i>
+          <span class="ml-3 menu-text">Logs</span>
+        </a>
+      </li>
+      <li>
+        <a href="/SMARTBITE-ADMIN/add_role.html" class="menu-item text-gray-300 flex items-center" data-page="add_role.html">
+          <i class="fas fa-user-plus w-6 text-center"></i>
+          <span class="ml-3 menu-text">Role Management</span>
+        </a>
+      </li>
+      <li>
+        <a href="../SMARTBITE-ADMIN/student_list.html" class="menu-item text-gray-300 flex items-center">
+          <i class="fas fa-users w-6 text-center"></i>
+          <span class="ml-3 menu-text">Student List</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Logout button at the bottom -->
+  <div class="p-4 border-t border-slate-700">
+    <button id="logoutBtn" class="w-full flex items-center justify-center px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition">
+      <i class="fas fa-sign-out-alt mr-2"></i>
+      <span class="menu-text">Logout</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Clear Logs Confirmation Modal -->
+<div id="clearLogsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all modal-enter">
+    <div class="text-center">
+      <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+        <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">Clear All Logs?</h3>
+      <p class="text-gray-600 mb-6">
+        This action will permanently delete all system logs. This cannot be undone.
+      </p>
+      <div class="flex gap-3 justify-center">
+        <button id="cancelClearBtn" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-semibold transition">
+          <i class="fas fa-times mr-2"></i>Cancel
+        </button>
+        <button id="confirmClearBtn" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition">
+          <i class="fas fa-trash-alt mr-2"></i>Yes, Clear Logs
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main id="mainContent" class="flex-1 p-8 transition-all duration-300">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-4xl font-bold text-gray-800 mb-2">
+            <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>
+            System Logs
+          </h1>
+          <p class="text-gray-600">Monitor all system activities and user actions</p>
+          <!-- Philippine Time Display -->
+          <div class="mt-2 flex items-center gap-2 text-sm text-gray-500">
+            <i class="fas fa-clock text-blue-500"></i>
+            <span>Philippine Time: </span>
+            <span id="philippineTime" class="ph-time-display font-mono text-base"></span>
+            <span id="philippineDate" class="text-gray-600 ml-2"></span>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button id="refreshBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+            <i class="fas fa-sync-alt"></i>
+            Refresh
+          </button>
+          <button id="exportBtn" class="bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+            <i class="fas fa-download"></i>
+            Export Excel
+          </button>
+          <button id="clearLogsBtn" class="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg">
+            <i class="fas fa-trash-alt"></i>
+            Clear Logs
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="stats-card bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-blue-100 text-sm font-medium mb-1">Total Logs</p>
+            <h3 id="totalLogs" class="text-3xl font-bold">0</h3>
+          </div>
+          <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+            <i class="fas fa-list text-3xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-card bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-green-100 text-sm font-medium mb-1">Today's Activity</p>
+            <h3 id="todayLogs" class="text-3xl font-bold">0</h3>
+          </div>
+          <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+            <i class="fas fa-calendar-day text-3xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-card bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-purple-100 text-sm font-medium mb-1">Active Users</p>
+            <h3 id="activeUsers" class="text-3xl font-bold">0</h3>
+          </div>
+          <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+            <i class="fas fa-users text-3xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-card bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-2xl shadow-xl">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-orange-100 text-sm font-medium mb-1">Filtered Results</p>
+            <h3 id="filteredLogs" class="text-3xl font-bold">0</h3>
+          </div>
+          <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+            <i class="fas fa-filter text-3xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <!-- Search -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-search mr-2 text-blue-500"></i>Search Logs
+          </label>
+          <input type="text" id="searchInput" placeholder="Search by message or user..." 
+            class="search-input w-full p-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+        </div>
+
+        <!-- Date Filter -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-calendar mr-2 text-blue-500"></i>Filter by Date
+          </label>
+          <input type="date" id="dateFilter" 
+            class="w-full p-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+        </div>
+
+        <!-- Action Filter -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-filter mr-2 text-blue-500"></i>Filter by Action
+          </label>
+          <select id="actionFilter" 
+            class="w-full p-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+            <option value="all">All Actions</option>
+            <option value="login">Login</option>
+            <option value="logout">Logout</option>
+            <option value="register">Register</option>
+            <option value="load">Load</option>
+            <option value="withdraw">Withdraw</option>
+            <option value="purchase">Purchase</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Active Filters Display -->
+      <div id="activeFilters" class="mt-4 flex flex-wrap gap-2"></div>
+
+      <!-- Reset Filters Button -->
+      <div class="mt-4 flex justify-end">
+        <button id="resetFiltersBtn" class="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2">
+          <i class="fas fa-times-circle"></i>
+          Reset All Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <i class="fas fa-table text-blue-600"></i>
+          Activity Log Entries
+        </h2>
+      </div>
+
+      <div class="logs-container overflow-x-auto" style="max-height: 600px;">
+        <table class="w-full">
+          <thead class="bg-gradient-to-r from-gray-100 to-gray-50 sticky top-0 z-10">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                <i class="fas fa-hashtag mr-2"></i>#
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                <i class="fas fa-clock mr-2"></i>Timestamp (PH Time)
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                <i class="fas fa-user mr-2"></i>User
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                <i class="fas fa-info-circle mr-2"></i>Action
+              </th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody">
+            <tr>
+              <td colspan="4" class="text-center py-12 text-gray-500">
+                <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                <p>Loading logs...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="p-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-600">
+            Showing <span id="showingStart" class="font-semibold">0</span> to 
+            <span id="showingEnd" class="font-semibold">0</span> of 
+            <span id="totalEntries" class="font-semibold">0</span> entries
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="firstPageBtn" class="pagination-btn px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button id="prevPageBtn" class="pagination-btn px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition">
+              <i class="fas fa-angle-left"></i> Prev
+            </button>
+            
+            <div id="pageNumbers" class="flex gap-2"></div>
+            
+            <button id="nextPageBtn" class="pagination-btn px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition">
+              Next <i class="fas fa-angle-right"></i>
+            </button>
+            <button id="lastPageBtn" class="pagination-btn px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+
+          <select id="itemsPerPage" class="p-2 border-2 border-gray-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+            <option value="10">10 per page</option>
+            <option value="25" selected>25 per page</option>
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Scripts -->
+<script type="module" src="logger.js"></script>
+
+<script>
+  // Sidebar toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    // Set active menu item based on current page
+    const currentPage = window.location.pathname.split('/').pop();
+    menuItems.forEach(item => {
+      if (item.getAttribute('data-page') === currentPage) {
+        item.classList.add('active');
+      }
+    });
+    
+    // Toggle sidebar
+    toggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('sidebar-collapsed');
+      mainContent.classList.toggle('main-expanded');
+      
+      // Change toggle button icon
+      const icon = toggleBtn.querySelector('i');
+      if (sidebar.classList.contains('sidebar-collapsed')) {
+        icon.classList.remove('fa-chevron-left');
+        icon.classList.add('fa-chevron-right');
+      } else {
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-left');
+      }
+    });
+    
+    // Logout functionality
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('cashierUser');
+        window.location.href = '../index.html';
+      }
+    });
+
+    // Modal functionality
+    const clearLogsModal = document.getElementById('clearLogsModal');
+    const clearLogsBtn = document.getElementById('clearLogsBtn');
+    const cancelClearBtn = document.getElementById('cancelClearBtn');
+    const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+    // Show modal when clear logs button is clicked
+    clearLogsBtn.addEventListener('click', function() {
+      clearLogsModal.classList.remove('hidden');
+      clearLogsModal.classList.add('flex');
+    });
+
+    // Hide modal when cancel is clicked
+    cancelClearBtn.addEventListener('click', function() {
+      clearLogsModal.classList.remove('flex');
+      clearLogsModal.classList.add('hidden');
+    });
+
+    // Hide modal when clicking outside
+    clearLogsModal.addEventListener('click', function(e) {
+      if (e.target === clearLogsModal) {
+        clearLogsModal.classList.remove('flex');
+        clearLogsModal.classList.add('hidden');
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && clearLogsModal.classList.contains('flex')) {
+        clearLogsModal.classList.remove('flex');
+        clearLogsModal.classList.add('hidden');
+      }
+    });
+
+    // Export functions for use in logger.js
+    window.showClearLogsModal = function() {
+      clearLogsModal.classList.remove('hidden');
+      clearLogsModal.classList.add('flex');
+    };
+
+    window.hideClearLogsModal = function() {
+      clearLogsModal.classList.remove('flex');
+      clearLogsModal.classList.add('hidden');
+    };
+  });
+
+  // Philippine Time and Date Display - FIXED
+  function updatePhilippineTime() {
+    const now = new Date();
+    
+    // Create Philippine time (UTC+8) - FIXED calculation
+    const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    
+    // Format time (12-hour format with AM/PM) - FIXED timezone
+    const timeString = phTime.toLocaleTimeString('en-PH', { 
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZone: 'UTC'
+    });
+    
+    // Format date - FIXED timezone
+    const dateOptions = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC'
+    };
+    
+    const dateString = phTime.toLocaleDateString('en-PH', dateOptions);
+    
+    document.getElementById('philippineTime').textContent = timeString;
+    document.getElementById('philippineDate').textContent = dateString;
+  }
+
+  // Update time every second
+  setInterval(updatePhilippineTime, 1000);
+  updatePhilippineTime(); // Initial call
+</script>
+
+</body>
+</html>

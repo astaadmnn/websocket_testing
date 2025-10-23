@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartBite Login | POS System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <link 
+    rel="stylesheet" 
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" 
+    crossorigin="anonymous" 
+  />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e6fffa 100%);
+      overflow-x: hidden;
+    }
+
+    .login-container {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+      transform: translateY(0);
+      transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .login-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 45px rgba(50, 50, 93, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-field {
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-login {
+      background: linear-gradient(to right, #10b981, #0ea5e9);
+      transition: all 0.3s ease-in-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2), 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+
+    .btn-login:focus:not(:active)::after {
+      animation: ripple 1.2s ease-out;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(20, 20);
+        opacity: 0;
+      }
+    }
+
+    .pulse {
+      animation: pulse 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    .floating-label {
+      position: absolute;
+      top: 50%;
+      left: 44px;
+      transform: translateY(-50%);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      color: #9ca3af;
+    }
+
+    .input-field:focus + .floating-label,
+    .input-field:not(:placeholder-shown) + .floating-label {
+      top: 0;
+      left: 40px;
+      font-size: 0.75rem;
+      background: white;
+      padding: 0 4px;
+      color: #10b981;
+    }
+
+    .floating-icon {
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+      100% {
+        transform: translateY(0px);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 1s ease both;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(25px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .slide-in {
+      animation: slideIn 0.8s ease both;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .bounce-in {
+      animation: bounceIn 0.9s ease-out both;
+    }
+
+    @keyframes bounceIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.3);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+      70% {
+        transform: scale(0.95);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    .receipt-icon {
+      animation: print 2.5s ease-in-out infinite;
+    }
+
+    @keyframes print {
+      0%, 100% { transform: translateY(0) rotate(0); }
+      25% { transform: translateY(-5px) rotate(2deg); }
+      75% { transform: translateY(-3px) rotate(-2deg); }
+    }
+
+    .coin-icon {
+      animation: coinSpin 4s linear infinite;
+    }
+
+    @keyframes coinSpin {
+      0% { transform: rotateY(0); }
+      100% { transform: rotateY(360deg); }
+    }
+
+    .floating-cash {
+      position: absolute;
+      opacity: 0.7;
+      z-index: 0;
+    }
+
+    .cash-1 {
+      top: 10%;
+      left: 5%;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    .cash-2 {
+      top: 20%;
+      right: 8%;
+      animation: float 10s ease-in-out infinite 1s;
+    }
+
+    .cash-3 {
+      bottom: 15%;
+      left: 10%;
+      animation: float 9s ease-in-out infinite 0.5s;
+    }
+
+    .cash-4 {
+      bottom: 25%;
+      right: 5%;
+      animation: float 7s ease-in-out infinite 1.5s;
+    }
+
+    .logo-container {
+      height: 120px;
+      width: 280px;
+      margin: 0 auto 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      padding: 15px;
+    }
+
+    .logo-placeholder {
+      color: #10b981;
+      font-weight: 700;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <!-- Floating food icons in background -->
+    <div class="floating-cash cash-1 text-emerald-500 text-4xl opacity-20">
+      <i class="fas fa-utensils"></i>
+    </div>
+    <div class="floating-cash cash-2 text-blue-500 text-3xl opacity-20">
+      <i class="fas fa-apple-alt"></i>
+    </div>
+    <div class="floating-cash cash-3 text-emerald-500 text-5xl opacity-20">
+      <i class="fas fa-hamburger"></i>
+    </div>
+    <div class="floating-cash cash-4 text-blue-500 text-2xl opacity-20">
+      <i class="fas fa-pizza-slice"></i>
+    </div>
+
+    <div class="w-full max-w-md login-card rounded-2xl p-8 relative overflow-hidden fade-in">
+      <!-- Decorative elements -->
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-emerald-50 rounded-full"></div>
+      <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-50 rounded-full"></div>
+
+      <div class="relative z-10">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <!-- Logo container - replace with your image -->
+          <div class="logo-container bounce-in">
+            <!-- Replace this div with your logo image -->
+            <img src="logo_sb.png" alt="SmartBite Logo" class="h-full w-full object-contain">
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 slide-in">SMARTBITE LOGIN</h2>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-6">
+          <div class="relative fade-in" style="animation-delay: 0.2s">
+            <div class="relative">
+              <div class="absolute left-3 top-3 text-gray-400 z-10">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <input id="email" type="email" placeholder=" " required
+                class="input-field w-full px-4 py-3 pl-12 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500">
+              <label for="email" class="floating-label">Email Address</label>
+              <div class="absolute right-3 top-3 text-gray-400">
+                <i class="fas fa-check-circle text-emerald-500 hidden" id="email-valid"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative fade-in" style="animation-delay: 0.4s">
+            <div class="relative">
+              <div class="absolute left-3 top-3 text-gray-400 z-10">
+                <i class="fas fa-lock"></i>
+              </div>
+              <input id="password" type="password" placeholder=" " required
+                class="input-field w-full px-4 py-3 pl-12 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500">
+              <label for="password" class="floating-label">Password</label>
+              <div class="absolute right-3 top-3 text-gray-400 cursor-pointer" id="toggle-password">
+                <i class="fas fa-eye" id="password-eye"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center fade-in" style="animation-delay: 0.6s">
+            <input id="remember" type="checkbox" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
+            <label for="remember" class="ml-2 block text-sm text-gray-700">Remember me</label>
+          </div>
+
+          <button type="submit"
+            class="btn-login w-full text-white py-3 rounded-lg font-medium flex items-center justify-center fade-in"
+            style="animation-delay: 0.8s">
+            <i class="fas fa-sign-in-alt mr-2"></i> Login
+          </button>
+        </form>
+
+        <p id="errorMsg" class="text-red-500 text-sm mt-4 text-center hidden bg-red-50 py-2 rounded-lg fade-in"></p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Initialize EmailJS with your public key
+    emailjs.init("YOUR_PUBLIC_KEY_HERE"); // Replace with your actual EmailJS public key
+
+    // Import Firebase
+    import { db } from "../script/firebase_conn.js";
+    import { ref as dbRef, get, child, push, set } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById("loginForm");
+      const errorMsg = document.getElementById("errorMsg");
+      const togglePassword = document.getElementById('toggle-password');
+      const passwordInput = document.getElementById('password');
+      const passwordEye = document.getElementById('password-eye');
+      const emailInput = document.getElementById('email');
+      const emailValidIcon = document.getElementById('email-valid');
+
+      // Email validation
+      emailInput.addEventListener('input', function() {
+        const email = emailInput.value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (emailRegex.test(email)) {
+          emailValidIcon.classList.remove('hidden');
+          emailInput.classList.remove('border-red-500');
+          emailInput.classList.add('border-emerald-500');
+        } else {
+          emailValidIcon.classList.add('hidden');
+          emailInput.classList.remove('border-emerald-500');
+        }
+      });
+
+      // Toggle password visibility
+      togglePassword.addEventListener('click', function() {
+        if (passwordInput.type === 'password') {
+          passwordInput.type = 'text';
+          passwordEye.classList.remove('fa-eye');
+          passwordEye.classList.add('fa-eye-slash');
+        } else {
+          passwordInput.type = 'password';
+          passwordEye.classList.remove('fa-eye-slash');
+          passwordEye.classList.add('fa-eye');
+        }
+      });
+
+      // Firebase Login Form Submission
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const loginBtn = loginForm.querySelector('button[type="submit"]');
+        const originalText = loginBtn.innerHTML;
+
+        if (!email || !password) {
+          showError("Please fill in all fields.");
+          return;
+        }
+
+        // Show loading state
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Logging in...';
+        loginBtn.disabled = true;
+        errorMsg.classList.add('hidden');
+
+        try {
+          const rootRef = dbRef(db);
+          const snapshot = await get(child(rootRef, "cashiers"));
+
+          if (!snapshot.exists()) {
+            showError("No accounts found.");
+            loginBtn.innerHTML = originalText;
+            loginBtn.disabled = false;
+            return;
+          }
+
+          let foundUser = null;
+
+          snapshot.forEach((childSnap) => {
+            const user = childSnap.val();
+            if (
+              user.email?.toLowerCase() === email.toLowerCase() &&
+              user.password === password
+            ) {
+              foundUser = { id: childSnap.key, ...user };
+            }
+          });
+
+          if (foundUser) {
+            // Show success state
+            loginBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Login Successful!';
+            loginBtn.classList.remove('bg-gradient-to-r', 'from-blue-500', 'to-purple-600');
+            loginBtn.classList.add('bg-emerald-500');
+
+            // Save logged-in user
+            localStorage.setItem("cashierUser", JSON.stringify(foundUser));
+
+            // Log login event
+            const logsRef = dbRef(db, "logs");
+            const newLogRef = push(logsRef);
+            const fullName = `${foundUser.first_name} ${foundUser.last_name}`;
+            await set(newLogRef, {
+              user: fullName,
+              message: `${fullName} logged in`,
+              timestamp: new Date().toISOString(),
+            });
+
+            // ✅ Redirect based on role
+            const role = foundUser.role?.toLowerCase();
+
+            setTimeout(() => {
+              if (role === "accountant") {
+                window.location.href = "../SMARTBITE-ADMIN/load_rfid.html";
+              } else if (role === "it" || role === "super admin") {
+                window.location.href = "../public/index.html";
+              } else if (role === "cashier") {
+                window.location.href = "../public/buy_products.html";
+              } else {
+                showError("Unknown role. Please contact the administrator.");
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+                loginBtn.classList.remove('bg-emerald-500');
+                loginBtn.classList.add('bg-gradient-to-r', 'from-blue-500', 'to-purple-600');
+              }
+            }, 1500);
+
+          } else {
+            showError("Invalid email or password.");
+            loginBtn.innerHTML = originalText;
+            loginBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error(err);
+          showError("Login failed: " + err.message);
+          loginBtn.innerHTML = originalText;
+          loginBtn.disabled = false;
+        }
+      });
+
+      function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.remove("hidden");
+        errorMsg.classList.add('shake');
+
+        setTimeout(() => {
+          errorMsg.classList.remove('shake');
+        }, 500);
+
+        // Auto-hide error after 5 seconds
+        setTimeout(() => {
+          errorMsg.classList.add('hidden');
+        }, 5000);
+      }
+    });
+  </script>
+</body>
+</html>
