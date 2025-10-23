@@ -1,4 +1,4 @@
-import { db } from "../script/firebase_conn.js";
+import { db } from "firebase_conn.js";
 import { ref as dbRef, push, set, get, update, remove } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, ref as refFromURL } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
