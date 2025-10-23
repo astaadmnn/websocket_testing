@@ -6,13 +6,13 @@
 <title>Load RFID Card | SmartBite</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="../css/loadrfid.css">
+<link rel="stylesheet" href="loadrfid.css">
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
-<script src="../script/firebase_conn.js"></script>
-<script type="module" src="../SMARTBITE-ADMIN/add_load_rfid.js"></script>
-<script type="module" src="../SMARTBITE-ADMIN/student_list.js"></script>
-<script type="module" src="../script/role_access.js"></script>
+<script src="firebase_conn.js"></script>
+<script type="module" src="add_load_rfid.js"></script>
+<script type="module" src="student_list.js"></script>
+<script type="module" src="role_access.js"></script>
 
 <style>
 @keyframes fadeInUp {
@@ -212,25 +212,25 @@
   <nav class="flex-1 py-4 overflow-y-auto">
     <ul class="space-y-1 px-2">
       <li>
-        <a href="/public/index.html" class="menu-item text-gray-300 flex items-center" data-page="index.html">
+        <a href="index.html" class="menu-item text-gray-300 flex items-center" data-page="index.html">
           <i class="fas fa-credit-card w-6 text-center"></i>
           <span class="ml-3 menu-text">Register RFID</span>
         </a>
       </li>
       <li>
-        <a href="/SMARTBITE-ADMIN/load_rfid.html" class="menu-item text-gray-300 flex items-center active" data-page="load_rfid.html">
+        <a href="load_rfid.html" class="menu-item text-gray-300 flex items-center active" data-page="load_rfid.html">
           <i class="fas fa-wallet w-6 text-center"></i>
           <span class="ml-3 menu-text">Load Card</span>
         </a>
       </li>
       <li>
-        <a href="/SMARTBITE-ADMIN/return_money.html" class="menu-item text-gray-300 flex items-center" data-page="return_money.html">
+        <a href="return_money.html" class="menu-item text-gray-300 flex items-center" data-page="return_money.html">
           <i class="fas fa-money-bill-wave w-6 text-center"></i>
           <span class="ml-3 menu-text">Withdraw Money</span>
         </a>
       </li>
       <li>
-        <a href="/public/products.html" class="menu-item text-gray-300 flex items-center" data-page="products.html">
+        <a href="products.html" class="menu-item text-gray-300 flex items-center" data-page="products.html">
           <i class="fas fa-box w-6 text-center"></i>
           <span class="ml-3 menu-text">Add Product</span>
         </a>
@@ -242,25 +242,25 @@
         </a>
       </li>
       <li>
-        <a href="../SMARTBITE-ADMIN/sales.html" class="menu-item text-gray-300 flex items-center" data-page="sales.html">
+        <a href="sales.html" class="menu-item text-gray-300 flex items-center" data-page="sales.html">
           <i class="fas fa-chart-line w-6 text-center"></i>
           <span class="ml-3 menu-text">Sales</span>
         </a>
       </li>
       <li>
-        <a href="../SMARTBITE-ADMIN/logs.html" class="menu-item text-gray-300 flex items-center" data-page="logs.html">
+        <a href="logs.html" class="menu-item text-gray-300 flex items-center" data-page="logs.html">
           <i class="fas fa-clipboard-list w-6 text-center"></i>
           <span class="ml-3 menu-text">Logs</span>
         </a>
       </li>
       <li>
-        <a href="/SMARTBITE-ADMIN/add_role.html" class="menu-item text-gray-300 flex items-center" data-page="add_cashier.html">
+        <a href="add_role.html" class="menu-item text-gray-300 flex items-center" data-page="add_cashier.html">
           <i class="fas fa-user-plus w-6 text-center"></i>
           <span class="ml-3 menu-text">Role Management</span>
         </a>
       </li>
       <li>
-        <a href="../SMARTBITE-ADMIN/student_list.html" class="menu-item text-gray-300 flex items-center">
+        <a href="student_list.html" class="menu-item text-gray-300 flex items-center">
           <i class="fas fa-users w-6 text-center"></i>
           <span class="ml-3 menu-text">Student List</span>
         </a>
