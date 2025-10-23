@@ -13,6 +13,7 @@ const firebaseConfig = {
   measurementId: "G-WV3DTHSQLG"
 };
 
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
